@@ -28,25 +28,25 @@ class Neo4jPlaylistInserter:
                 artists = [a.strip() for a in str(params['Artist Name(s)']).split(';')]
 
                 query = """
-                MERGE (u:User {name: $user_name})
+                MERGE (u:User {nombre: $user_name})
 
-                MERGE (al:Album {name: $album_name})
-                ON CREATE SET al.release_date = $release_date, al.label = $record_label
+                MERGE (al:Album {nombre: $album_name})
+                ON CREATE SET al.fecha_de_lanzamiento = $release_date, al.discografica = $record_label
 
                 MERGE (t:Track {uri: $track_uri})
-                ON CREATE SET t.name = $track_name,
-                              t.duration_ms = $duration,
-                              t.explicit = $explicit,
-                              t.danceability = $danceability,
-                              t.energy = $energy
-                ON MATCH SET t.popularity = $popularity // Actualiza popularidad si cambió
+                ON CREATE SET t.nombre = $track_name,
+                              t.duracion_ms = $duration,
+                              t.explicito = $explicit,
+                              t.bailabilidad = $danceability,
+                              t.energia = $energy
+                ON MATCH SET t.popularidad = $popularity // Actualiza popularidad si cambió
 
                 MERGE (t)-[:PERTENECE_A]->(al)
                 MERGE (u)-[:AGREGO]->(t)
 
                 WITH t
                 UNWIND $artist_list AS artist_name
-                MERGE (a:Artist {name: artist_name})
+                MERGE (a:Artista {nombre: artist_name})
                 MERGE (a)-[:INTERPRETA]->(t)
                 """
 
@@ -65,8 +65,7 @@ class Neo4jPlaylistInserter:
                             artist_list=artists)
 
 
-def main():
-    # Lista con todos los archivos de las playlists que quieres procesar
+def carga_neo4j():
     playlist_files = [
         'playlist_anto.csv',
         'playlist_chen.csv',
@@ -91,4 +90,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    carga_neo4j()
