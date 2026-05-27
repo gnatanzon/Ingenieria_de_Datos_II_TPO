@@ -4,7 +4,7 @@ from neo4j import GraphDatabase
 
 URI = "bolt://localhost:7687"
 USER = "neo4j"
-PASSWORD = ""
+PASSWORD = "guillermina"
 
 
 class Neo4jPlaylistInserter:
@@ -38,7 +38,9 @@ class Neo4jPlaylistInserter:
                               t.duracion_ms = $duration,
                               t.explicito = $explicit,
                               t.bailabilidad = $danceability,
-                              t.energia = $energy
+                              t.energia = $energy,
+                              t.valencia = $valence,
+                              t.tempo = $tempo
                 ON MATCH SET t.popularidad = $popularity // Actualiza popularidad si cambió
 
                 MERGE (t)-[:PERTENECE_A]->(al)
@@ -61,6 +63,8 @@ class Neo4jPlaylistInserter:
                             explicit=params['Explicit'],
                             popularity=params['Popularity'],
                             danceability=params['Danceability'],
+                            valence=params['Valence'],
+                            tempo=params['Tempo'],
                             energy=params['Energy'],
                             artist_list=artists)
 
