@@ -86,15 +86,20 @@ class MongoPlaylistInserter:
 
 
 def carga_mongodb():
-    playlist_files = ["canciones.csv"]
+    # 1. obtengo la ruta absoluta de la carpeta donde está ESTE archivo .py
+    directorio_actual = os.path.dirname(os.path.abspath(__file__))
+    
+    # 2. armo la ruta correcta hacia el CSV uniendo la carpeta con el nombre del archivo
+    ruta_csv = os.path.join(directorio_actual, "canciones.csv")
 
     inserter = MongoPlaylistInserter(MONGO_URI, DATABASE_NAME, COLLECTION_NAME)
     try:
-        for file in playlist_files:
-            if os.path.exists(file):
-                inserter.insert_playlist_file(file)
-            else:
-                print(f"{file} no existe")
+        # 3. valido usando la ruta absoluta construida
+        if os.path.exists(ruta_csv):
+            inserter.insert_playlist_file(ruta_csv)
+        else:
+            print(f"No se encontró el archivo en: {ruta_csv}")
+            
         print("\ncarga exitosa")
     except Exception as e:
         print(f"ERROR! {e}")
