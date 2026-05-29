@@ -16,7 +16,9 @@ class Neo4jPlaylistInserter:
 
     def insert_playlist_file(self, file_path):
         print(f"procesando: {file_path}...")
+
         df = pd.read_csv(file_path)
+        df = df.fillna("")
 
         if 'Added At' in df.columns:
             df = df.drop(columns=['Added At'])
@@ -26,6 +28,8 @@ class Neo4jPlaylistInserter:
                 params = row.to_dict()
 
                 artists = [a.strip() for a in str(params['Artist Name(s)']).split(';')]
+
+                genres = [g.strip().lower() for g in str(params.get('Genres', '')).split(',') if g.strip()]
 
                 query = """
                 MERGE (u:User {nombre: $user_name})
@@ -40,8 +44,13 @@ class Neo4jPlaylistInserter:
                               t.bailabilidad = $danceability,
                               t.energia = $energy,
                               t.valencia = $valence,
-                              t.tempo = $tempo
-                ON MATCH SET t.popularidad = $popularity // Actualiza popularidad si cambió
+                              t.tempo = $tempo,
+                              t.volumen = $loudness,
+                              t.vivacidad = $liveness,
+                              t.instrumentalidad = $instrumentalness,
+                              t.acustica = $acousticness,
+                              t.dialogado = $speechiness
+                ON MATCH SET t.popularidad = $popularity 
 
                 MERGE (t)-[:PERTENECE_A]->(al)
                 MERGE (u)-[:AGREGO]->(t)
@@ -50,6 +59,12 @@ class Neo4jPlaylistInserter:
                 UNWIND $artist_list AS artist_name
                 MERGE (a:Artista {nombre: artist_name})
                 MERGE (a)-[:INTERPRETA]->(t)
+
+                WITH DISTINCT t
+                UNWIND $genre_list AS genre_name
+                WITH t, genre_name WHERE genre_name <> ""
+                MERGE (g:Genero {nombre: genre_name})
+                MERGE (t)-[:GENERO]->(g)
                 """
 
                 session.run(query,
@@ -66,17 +81,18 @@ class Neo4jPlaylistInserter:
                             valence=params['Valence'],
                             tempo=params['Tempo'],
                             energy=params['Energy'],
-                            artist_list=artists)
+                            loudness=params['Loudness'],
+                            acousticness=params['Acousticness'],
+                            liveness=params['Liveness'],
+                            speechiness=params['Speechiness'],
+                            instrumentalness=params['Instrumentalness'],
+                            artist_list=artists,
+                            genre_list=genres)
 
 
 def carga_neo4j():
     playlist_files = [
-        'playlist_anto.csv',
-        'playlist_chen.csv',
-        'playlist_cami.csv',
-        'playlist_julis.csv',
-        'playlist_julib.csv',
-        'playlist_guillermina.csv',
+        'neo4j/playlists.csv',
     ]
 
     inserter = Neo4jPlaylistInserter(URI, USER, PASSWORD)

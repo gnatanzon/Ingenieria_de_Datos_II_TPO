@@ -3,97 +3,135 @@ import pandas as pd
 from neo4j import GraphDatabase
 from voyager import Index, Space
 
-# 1. Configuración de conexiones (Coincidiendo exactamente con tu carga)
-URI = "bolt://localhost:7687"
-USER = "neo4j"
-PASSWORD = "guillermina"
+URI              = "bolt://localhost:7687"
+USER             = "neo4j"
+PASSWORD         = "guillermina"
+USUARIO_OBJETIVO = ("Guillermina")
+TOP_AMIGAS       = 2
+TOP_RECOMENDADAS = 10
+FEATURES         = ['bailabilidad', 'energia', 'valencia', 'tempo',
+                    'volumen', 'vivacidad', 'instrumentalidad', 'acustica', 'dialogado']
 
-# Podés cambiar este nombre por cualquiera que esté en las playlists (ej: 'Antonella', 'Chen', etc.)
-USUARIO_OBJETIVO = "Guillermina"
+query_afinidad = """
+MATCH (yo:User {nombre: $target_user}), (amiga:User)
+WHERE yo <> amiga
 
-# 2. Query adaptada a tus etiquetas y propiedades en español
-query = """
-MATCH (t:Track)<-[:AGREGO]-(anyUser:User)
-WITH DISTINCT t
-OPTIONAL MATCH (u:User {nombre: $target_user})-[:AGREGO]->(t)
-WITH t, u IS NOT NULL AS le_gusta
-RETURN t.uri AS uri, 
-       t.nombre AS nombre, 
-       t.bailabilidad AS bailabilidad, 
-       t.energia AS energia,
-       t.valencia AS valencia,
-       t.tempo AS tempo,
-       le_gusta
+// Canciones en común
+OPTIONAL MATCH (yo)-[:AGREGO]->(t:Track)<-[:AGREGO]-(amiga)
+WITH yo, amiga, count(DISTINCT t) AS canciones_en_comun
+
+// Artistas en común
+OPTIONAL MATCH (yo)-[:AGREGO]->(:Track)<-[:INTERPRETA]-(a:Artista)-[:INTERPRETA]->(:Track)<-[:AGREGO]-(amiga)
+WITH yo, amiga, canciones_en_comun, count(DISTINCT a) AS artistas_en_comun
+
+// Géneros en común
+OPTIONAL MATCH (yo)-[:AGREGO]->(:Track)-[:GENERO]->(g:Genero)<-[:GENERO]-(:Track)<-[:AGREGO]-(amiga)
+WITH yo, amiga, canciones_en_comun, artistas_en_comun, count(DISTINCT g) AS generos_en_comun
+
+WHERE canciones_en_comun > 0 OR artistas_en_comun > 0 OR generos_en_comun > 0
+
+RETURN amiga.nombre AS amiga,
+       canciones_en_comun,
+       artistas_en_comun,
+       generos_en_comun,
+       (canciones_en_comun * 3 + artistas_en_comun * 2 + generos_en_comun * 1) AS puntaje_afinidad
+ORDER BY puntaje_afinidad DESC
 """
 
-print(f"Conectando a Neo4j para analizar las playlists del grupo...")
+print(f"Procesando, target: '{USUARIO_OBJETIVO}'...")
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 with driver.session() as session:
-    result = session.run(query, target_user=USUARIO_OBJETIVO)
-    records = [r.data() for r in result]
+    records = [r.data() for r in session.run(query_afinidad, target_user=USUARIO_OBJETIVO)]
 driver.close()
 
-# Convertimos el resultado a un DataFrame de Pandas
-df = pd.DataFrame(records)
+df_afinidad = pd.DataFrame(records)
 
-if df.empty:
-    print("La base de datos está vacía. Asegurate de haber corrido primero tu script de carga.")
+if df_afinidad.empty:
+    print("No se encontraron relaciones.")
     exit()
 
-# 3. Definimos las características que guardaste en tu Neo4j
-features = ['bailabilidad', 'energia', 'valencia', 'tempo']
-df_norm = df.copy()
+top_amigas = df_afinidad.head(TOP_AMIGAS)['amiga'].tolist()
 
-# Normalización Min-Max para asegurar que ambas métricas tengan el mismo peso matemático (rango 0 a 1)
-for col in features:
-    min_val = df_norm[col].min()
-    max_val = df_norm[col].max()
-    if max_val != min_val:
-        df_norm[col] = (df_norm[col] - min_val) / (max_val - min_val)
-    else:
-        df_norm[col] = 0.0
+print(f"\nTop {TOP_AMIGAS} amigas más afines:")
+for _, row in df_afinidad.head(TOP_AMIGAS).iterrows():
+    print(f"  • {row['amiga']} → {int(row['puntaje_afinidad'])} pts ")
 
-# 4. Separación por lógica de Grafos (Filtro Colaborativo)
-# Canciones que al usuario objetivo YA le gustan (para armar su perfil sónico)
-df_liked = df_norm[df_norm['le_gusta'] == True]
-# Canciones candidatas (temas agregados por amigos que el usuario objetivo NO tiene)
-df_candidates = df_norm[df_norm['le_gusta'] == False]
+query_candidatas = """
+MATCH (yo:User {nombre: $target_user}), (amiga:User)
+WHERE amiga.nombre IN $top_amigas
 
-if df_liked.empty:
-    print(f"El usuario '{USUARIO_OBJETIVO}' no tiene canciones cargadas para calcular sus gustos.")
+MATCH (amiga)-[:AGREGO]->(candidata:Track)
+WHERE NOT (yo)-[:AGREGO]->(candidata)
+
+RETURN DISTINCT
+    candidata.uri          AS uri,
+    candidata.nombre       AS nombre,
+    candidata.bailabilidad AS bailabilidad,
+    candidata.energia      AS energia,
+    candidata.valencia     AS valencia,
+    candidata.tempo        AS tempo,
+    candidata.volumen      AS volumen,
+    candidata.vivacidad    AS vivacidad,
+    candidata.instrumentalidad AS instrumentalidad,
+    candidata.acustica     AS acustica,
+    candidata.dialogado    AS dialogado
+"""
+
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+with driver.session() as session:
+    candidatas = [r.data() for r in session.run(query_candidatas,
+                                                  target_user=USUARIO_OBJETIVO,
+                                                  top_amigas=top_amigas)]
+driver.close()
+
+df_candidatas = pd.DataFrame(candidatas)
+
+if df_candidatas.empty:
+    print("No se encontraron canciones nuevas.")
     exit()
 
-if df_candidates.empty:
-    print(f"¡Oops! '{USUARIO_OBJETIVO}' ya tiene agregadas absolutamente todas las canciones de sus amigos.")
+print(f"Se encontraron {len(df_candidatas)} canciones candidatas.")
+
+query_perfil = """
+MATCH (u:User {nombre: $target_user})-[:AGREGO]->(t:Track)
+RETURN t.bailabilidad      AS bailabilidad,
+       t.energia          AS energia,
+       t.valencia         AS valencia,
+       t.tempo            AS tempo,
+       t.volumen          AS volumen,
+       t.vivacidad        AS vivacidad,
+       t.instrumentalidad AS instrumentalidad,
+       t.acustica         AS acustica,
+       t.dialogado        AS dialogado
+"""
+
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+with driver.session() as session:
+    perfil_records = [r.data() for r in session.run(query_perfil, target_user=USUARIO_OBJETIVO)]
+driver.close()
+
+df_perfil = pd.DataFrame(perfil_records).dropna()
+
+if df_perfil.empty:
+    print("El usuario no tiene canciones.")
     exit()
 
-# 5. Cálculo del "Vector de Gusto" promedio del usuario objetivo
-user_taste_vector = df_liked[features].mean().to_numpy().astype('float32')
+#VOYAGER
+vector_usuario = df_perfil[FEATURES].mean().to_numpy().astype('float32')
 
-print(f"\n--- Perfil Musical Calculado para {USUARIO_OBJETIVO} ---")
-print(f" * Bailabilidad promedio: {user_taste_vector[0]:.2f}")
-print(f" * Energía promedio: {user_taste_vector[1]:.2f}")
+df_candidatas = df_candidatas.dropna(subset=FEATURES).reset_index(drop=True)
+candidate_vectors = df_candidatas[FEATURES].to_numpy().astype('float32')
 
-# 6. Indexar los vectores candidatos en Voyager (Espacio Euclideo bidimensional)
-candidate_vectors = df_candidates[features].to_numpy().astype('float32')
-
-index = Index(Space.Euclidean, num_dimensions=len(features))
+index = Index(Space.Euclidean, num_dimensions=len(FEATURES))
 index.add_items(candidate_vectors)
 
-# Listas auxiliares para mapear los resultados de Voyager con los nombres reales
-id_to_name = df_candidates['nombre'].tolist()
+k = min(TOP_RECOMENDADAS, len(df_candidatas))
+neighbors, distances = index.query(vector_usuario, k=k)
 
-# 7. Consultar a Voyager cuáles canciones candidatas se acercan más al perfil del usuario
-top_k = min(5, len(df_candidates))
-neighbors, distances = index.query(user_taste_vector, k=top_k)
+print(f"RECOMENDACIONES PARA {USUARIO_OBJETIVO.upper()}")
+print(f"Seleccionadas entre canciones de las amigas más afines,")
+print(f"ordenadas por similitud acústica con tu perfil musical:\n")
 
-# 8. Desplegar los resultados del Recomendador Híbrido
-print(f"\n=======================================================")
-print(f"   TOP {top_k} RECOMENDACIONES HÍBRIDAS PARA {USUARIO_OBJETIVO.upper()} ")
-print(f"=======================================================")
-print("Filtrado por Grafo Social (Playlists de amigos) y ordenado por Spotify Voyager:\n")
-
-for rank, (neighbor_id, distance) in enumerate(zip(neighbors, distances), 1):
-    nombre_cancion = id_to_name[neighbor_id]
-    print(f"{rank}. 🎵 '{nombre_cancion}'")
-    print(f"   • Distancia Euclidiana a su perfil de gusto: {distance:.4f}")
+for rank, (idx, dist) in enumerate(zip(neighbors, distances), 1):
+    nombre = df_candidatas.loc[idx, 'nombre']
+    print(f"{rank:>2}. '{nombre}'")
