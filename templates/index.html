@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SonicMesh — Selector de Playlist</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f13; color: #e0e0e0; min-height: 100vh; }
+
+    header {
+      background: #1a1a24;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2a2a3a;
+    }
+    header h1 { font-size: 1.4rem; color: #a78bfa; letter-spacing: 1px; }
+    .usuario-wrap { display: flex; align-items: center; gap: 10px; }
+    .usuario-wrap label { font-size: 0.85rem; color: #888; }
+    .usuario-wrap input {
+      background: #252535; border: 1px solid #3a3a50; border-radius: 6px;
+      color: #e0e0e0; padding: 6px 10px; font-size: 0.9rem; width: 140px;
+    }
+
+    .layout { display: grid; grid-template-columns: 1fr 340px; gap: 0; height: calc(100vh - 61px); }
+
+    /* Panel izquierdo */
+    .panel-canciones { padding: 24px; overflow-y: auto; border-right: 1px solid #2a2a3a; }
+    .filtros { display: flex; gap: 10px; margin-bottom: 20px; }
+    .filtros input, .filtros select {
+      flex: 1; background: #1e1e2e; border: 1px solid #3a3a50; border-radius: 8px;
+      color: #e0e0e0; padding: 9px 14px; font-size: 0.9rem;
+    }
+    .filtros input:focus, .filtros select:focus { outline: none; border-color: #a78bfa; }
+
+    .lista-canciones { display: flex; flex-direction: column; gap: 8px; }
+    .cancion-card {
+      background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 10px;
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+      transition: border-color 0.15s;
+    }
+    .cancion-card:hover { border-color: #a78bfa44; }
+    .cancion-card.en-carrito { border-color: #a78bfa; background: #1e1a2e; }
+    .cancion-info { flex: 1; min-width: 0; }
+    .cancion-nombre { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cancion-artista { font-size: 0.8rem; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cancion-genero { font-size: 0.75rem; color: #a78bfa99; margin-top: 3px; }
+    .btn-agregar {
+      background: #a78bfa22; border: 1px solid #a78bfa55; color: #a78bfa;
+      border-radius: 7px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer;
+      white-space: nowrap; transition: background 0.15s;
+    }
+    .btn-agregar:hover { background: #a78bfa44; }
+    .btn-agregar.agregado { background: #a78bfa33; color: #c4b5fd; }
+    .btn-quitar {
+      background: #ff4d6d22; border: 1px solid #ff4d6d55; color: #ff4d6d;
+      border-radius: 7px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer;
+      white-space: nowrap;
+    }
+    .no-resultados { color: #555; text-align: center; padding: 40px 0; font-size: 0.9rem; }
+
+    /* Panel derecho — carrito */
+    .panel-carrito { display: flex; flex-direction: column; background: #13131c; }
+    .carrito-header { padding: 20px 20px 12px; border-bottom: 1px solid #2a2a3a; }
+    .carrito-header h2 { font-size: 1rem; color: #c4b5fd; }
+    .carrito-contador { font-size: 0.8rem; color: #666; margin-top: 3px; }
+    .carrito-lista { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+    .carrito-item {
+      background: #1a1a24; border-radius: 8px; padding: 10px 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .carrito-item-nombre { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .carrito-item-artista { font-size: 0.75rem; color: #777; }
+    .btn-x { background: none; border: none; color: #555; cursor: pointer; font-size: 1rem; padding: 2px 4px; }
+    .btn-x:hover { color: #ff4d6d; }
+    .carrito-vacio { color: #444; text-align: center; padding: 30px 0; font-size: 0.85rem; }
+
+    .carrito-footer { padding: 16px; border-top: 1px solid #2a2a3a; }
+    .btn-confirmar {
+      width: 100%; background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      border: none; color: white; border-radius: 10px; padding: 13px;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-confirmar:hover:not(:disabled) { opacity: 0.88; }
+    .btn-confirmar:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1e1e2e; border: 1px solid #a78bfa; color: #c4b5fd;
+      padding: 10px 22px; border-radius: 8px; font-size: 0.88rem;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+    }
+    .toast.visible { opacity: 1; }
+    .toast.error { border-color: #ff4d6d; color: #ff4d6d; }
+
+    .loading { color: #555; text-align: center; padding: 40px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎵 SonicMesh</h1>
+  <div class="usuario-wrap">
+    <label>Usuario:</label>
+    <input type="text" id="input-usuario" placeholder="Tu nombre" value="Chen">
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Canciones -->
+  <div class="panel-canciones">
+    <div class="filtros">
+      <input type="text" id="input-busqueda" placeholder="Buscar canción o artista..." oninput="buscarDebounce()">
+      <select id="select-genero" onchange="buscar()">
+        <option value="">Todos los géneros</option>
+      </select>
+    </div>
+    <div class="lista-canciones" id="lista-canciones">
+      <div class="loading">Cargando canciones...</div>
+    </div>
+  </div>
+
+  <!-- Carrito -->
+  <div class="panel-carrito">
+    <div class="carrito-header">
+      <h2>Mi selección</h2>
+      <div class="carrito-contador" id="carrito-contador">0 canciones</div>
+    </div>
+    <div class="carrito-lista" id="carrito-lista">
+      <div class="carrito-vacio">Todavía no agregaste canciones</div>
+    </div>
+    <div class="carrito-footer">
+      <button class="btn-confirmar" id="btn-confirmar" onclick="confirmar()" disabled>
+        Confirmar y cargar a Neo4j
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let carrito = [];   // URIs en el carrito
+  let debounceTimer;
+
+  function usuario() {
+    return document.getElementById("input-usuario").value.trim() || "usuario";
+  }
+
+  // ── Géneros ────────────────────────────────────────────────────────────────
+  async function cargarGeneros() {
+    const res = await fetch("/api/generos");
+    const generos = await res.json();
+    const sel = document.getElementById("select-genero");
+    generos.forEach(g => {
+      const opt = document.createElement("option");
+      opt.value = g; opt.textContent = g;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Búsqueda ───────────────────────────────────────────────────────────────
+  function buscarDebounce() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(buscar, 300);
+  }
+
+  async function buscar() {
+    const q      = document.getElementById("input-busqueda").value.trim();
+    const genero = document.getElementById("select-genero").value;
+    const params = new URLSearchParams();
+    if (q)      params.set("q", q);
+    if (genero) params.set("genero", genero);
+
+    const res      = await fetch(`/api/canciones?${params}`);
+    const canciones = await res.json();
+    renderCanciones(canciones);
+  }
+
+  function renderCanciones(canciones) {
+    const lista = document.getElementById("lista-canciones");
+    if (!canciones.length) {
+      lista.innerHTML = '<div class="no-resultados">Sin resultados</div>';
+      return;
+    }
+    lista.innerHTML = canciones.map(c => {
+      const enCarrito = carrito.includes(c.uri);
+      const artistas  = Array.isArray(c.artistas) ? c.artistas.join(", ") : (c.artistas || "");
+      return `
+        <div class="cancion-card ${enCarrito ? 'en-carrito' : ''}" id="card-${btoa(c.uri).replace(/=/g,'')}">
+          <div class="cancion-info">
+            <div class="cancion-nombre">${c.nombre || "Sin nombre"}</div>
+            <div class="cancion-artista">${artistas}</div>
+            <div class="cancion-genero">${c.generos || ""}</div>
+          </div>
+          ${enCarrito
+            ? `<button class="btn-quitar" onclick="quitar('${c.uri}')">Quitar</button>`
+            : `<button class="btn-agregar" onclick="agregar('${c.uri}', '${(c.nombre||'').replace(/'/g,"\\'")}', '${artistas.replace(/'/g,"\\'")}')">+ Agregar</button>`
+          }
+        </div>`;
+    }).join("");
+  }
+
+  // ── Carrito ────────────────────────────────────────────────────────────────
+  async function agregar(uri, nombre, artista) {
+    const res = await fetch(`/api/carrito/${usuario()}/agregar`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({uri})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      carrito.push(uri);
+      actualizarCarrito();
+      buscar();
+      mostrarToast(`"${nombre}" agregada`);
+    }
+  }
+
+  async function quitar(uri) {
+    await fetch(`/api/carrito/${usuario()}/quitar`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({uri})
+    });
+    carrito = carrito.filter(u => u !== uri);
+    actualizarCarrito();
+    buscar();
+  }
+
+  async function actualizarCarrito() {
+    const res  = await fetch(`/api/carrito/${usuario()}`);
+    const data = await res.json();
+    carrito    = data.map(c => c.uri);
+
+    const lista = document.getElementById("carrito-lista");
+    const contador = document.getElementById("carrito-contador");
+    const btnConfirmar = document.getElementById("btn-confirmar");
+
+    contador.textContent = `${data.length} canción${data.length !== 1 ? "es" : ""}`;
+    btnConfirmar.disabled = data.length === 0;
+
+    if (!data.length) {
+      lista.innerHTML = '<div class="carrito-vacio">Todavía no agregaste canciones</div>';
+      return;
+    }
+    lista.innerHTML = data.map(c => {
+      const artistas = Array.isArray(c.artistas) ? c.artistas.join(", ") : (c.artistas || "");
+      return `
+        <div class="carrito-item">
+          <div style="min-width:0">
+            <div class="carrito-item-nombre">${c.nombre || "Sin nombre"}</div>
+            <div class="carrito-item-artista">${artistas}</div>
+          </div>
+          <button class="btn-x" onclick="quitar('${c.uri}')" title="Quitar">✕</button>
+        </div>`;
+    }).join("");
+  }
+
+  // ── Confirmar ──────────────────────────────────────────────────────────────
+  async function confirmar() {
+    const btn = document.getElementById("btn-confirmar");
+    btn.disabled = true;
+    btn.textContent = "Cargando...";
+    try {
+      const res  = await fetch(`/api/carrito/${usuario()}/confirmar`, { method: "POST" });
+      const data = await res.json();
+      if (data.ok) {
+        mostrarToast(`✅ ${data.insertadas} canciones cargadas a Neo4j`);
+        carrito = [];
+        actualizarCarrito();
+        buscar();
+      } else {
+        mostrarToast(`❌ ${data.error}`, true);
+      }
+    } catch(e) {
+      mostrarToast("❌ Error al conectar con el servidor", true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Confirmar y cargar a Neo4j";
+    }
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function mostrarToast(msg, esError = false) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast visible" + (esError ? " error" : "");
+    setTimeout(() => t.className = "toast", 2800);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  document.getElementById("input-usuario").addEventListener("change", actualizarCarrito);
+
+  cargarGeneros();
+  buscar();
+  actualizarCarrito();
+</script>
+</body>
+</html>

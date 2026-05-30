@@ -45,11 +45,11 @@ class Neo4jPlaylistInserter:
                               t.energia = $energy,
                               t.valencia = $valence,
                               t.tempo = $tempo,
-                              t.volumen = $loudness,
+                              t.sonoridad = $loudness,
                               t.vivacidad = $liveness,
                               t.instrumentalidad = $instrumentalness,
                               t.acustica = $acousticness,
-                              t.dialogado = $speechiness
+                              t.discursividad = $speechiness
                 ON MATCH SET t.popularidad = $popularity 
 
                 MERGE (t)-[:PERTENECE_A]->(al)

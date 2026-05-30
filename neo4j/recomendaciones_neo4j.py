@@ -10,7 +10,7 @@ USUARIO_OBJETIVO = "Camila"
 TOP_AMIGAS       = 2
 TOP_RECOMENDADAS = 10
 FEATURES         = ['bailabilidad', 'energia', 'valencia', 'tempo',
-                    'volumen', 'vivacidad', 'instrumentalidad', 'acustica', 'dialogado']
+                    'sonoridad', 'vivacidad', 'instrumentalidad', 'acustica', 'discursividad']
 
 query_afinidad = """
 MATCH (yo:User {nombre: $target_user}), (amiga:User)
@@ -77,11 +77,11 @@ RETURN DISTINCT
     candidata.energia          AS energia,
     candidata.valencia         AS valencia,
     candidata.tempo            AS tempo,
-    candidata.volumen          AS volumen,
+    candidata.sonoridad        AS sonoridad,
     candidata.vivacidad        AS vivacidad,
     candidata.instrumentalidad AS instrumentalidad,
     candidata.acustica         AS acustica,
-    candidata.dialogado        AS dialogado
+    candidata.discursividad    AS discursividad
 """
 
 query_generos_comun = """
@@ -100,11 +100,11 @@ RETURN DISTINCT
     candidata.energia          AS energia,
     candidata.valencia         AS valencia,
     candidata.tempo            AS tempo,
-    candidata.volumen          AS volumen,
+    candidata.sonoridad        AS sonoridad,
     candidata.vivacidad        AS vivacidad,
     candidata.instrumentalidad AS instrumentalidad,
     candidata.acustica         AS acustica,
-    candidata.dialogado        AS dialogado
+    candidata.discursividad    AS discursividad
 """
 
 print(f"\nBuscando canciones candidatas de {top_amigas}...")
@@ -134,11 +134,11 @@ RETURN t.bailabilidad      AS bailabilidad,
        t.energia           AS energia,
        t.valencia          AS valencia,
        t.tempo             AS tempo,
-       t.volumen           AS volumen,
+       t.sonoridad         AS sonoridad,
        t.vivacidad         AS vivacidad,
        t.instrumentalidad  AS instrumentalidad,
        t.acustica          AS acustica,
-       t.dialogado         AS dialogado
+       t.discursividad     AS discursividad
 """
 
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
