@@ -5,6 +5,9 @@ MONGO_URI = "mongodb://localhost:27017/"
 DATABASE_NAME = "sonicmesh_db"
 COLLECTION_NAME = "canciones"
 
+client = MongoClient(MONGO_URI)
+col    = client[DATABASE_NAME][COLLECTION_NAME]
+
 class MongoAnalytics:
     def __init__(self, uri, db_name, collection_name):
         self.client = MongoClient(uri)
@@ -121,8 +124,74 @@ class MongoAnalytics:
                 
         if conteo == 0:
             print("⚠️ No se encontraron décadas para agrupar. Verificá que los documentos en la base de datos tengan el campo 'album.fecha_de_lanzamiento'.")
+
     def close(self):
         self.client.close()
+
+
+def buscar_canciones(busqueda: str = "", genero: str = "") -> list:
+    print(f"\n--- CONSULTA 1: BÚSQUEDA DE CANCIONES (q='{busqueda}', genero='{genero}') ---")
+
+    query = {}
+
+    if busqueda:
+        query["$or"] = [
+            {"nombre": {"$regex": busqueda, "$options": "i"}},
+            {"artistas": {"$regex": busqueda, "$options": "i"}},
+        ]
+
+    if genero:
+        query["generos"] = {"$regex": genero, "$options": "i"}
+
+    canciones = list(col.find(query, {"_id": 0}).limit(100))
+    print(f"   → {len(canciones)} canciones encontradas.")
+    return canciones
+
+
+def obtener_generos() -> list:
+    print("\n--- CONSULTA 2: GÉNEROS ÚNICOS (distinct) ---")
+
+    query = col.distinct("generos")
+
+    generos = set()
+    for g in query:
+        if g:
+            for item in str(g).split(","):
+                item = item.strip()
+                if item:
+                    generos.add(item)
+
+    resultado = sorted(generos)
+    print(f"   → {len(resultado)} géneros distintos encontrados.")
+    return resultado
+
+
+def buscar_cancion_por_uri(uri: str) -> dict | None:
+    print(f"\n--- CONSULTA 3: BUSCAR POR URI ---")
+    print(f"   uri: {uri}")
+
+    query = {"uri": uri}
+
+    resultado = col.find_one(query, {"_id": 0})
+    print(f"   → {'Encontrada' if resultado else 'No encontrada'}.")
+    return resultado
+
+
+def buscar_canciones_por_uris(uris: list) -> list:
+    print(f"\n--- CONSULTA 4: BUSCAR POR LISTA DE URIs ($in) ---")
+    print(f"   URIs solicitados: {len(uris)}")
+
+    query = {"uri": {"$in": uris}}
+
+    docs = {
+        doc["uri"]: doc
+        for doc in col.find(query, {"_id": 0})
+    }
+
+
+    resultado = [docs[uri] for uri in uris if uri in docs]
+    print(f"   → {len(resultado)} documentos hidratados.")
+    return resultado
 
 if __name__ == "__main__":
     analytics = MongoAnalytics(MONGO_URI, DATABASE_NAME, COLLECTION_NAME)

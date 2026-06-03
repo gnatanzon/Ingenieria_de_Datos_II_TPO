@@ -90,10 +90,8 @@ class Neo4jPlaylistInserter:
                             genre_list=genres)
 
 
-def carga_neo4j():
-    playlist_files = [
-        'neo4j/playlists.csv',
-    ]
+def carga_neo4j(playlist):
+    playlist_files = [playlist]
 
     inserter = Neo4jPlaylistInserter(URI, USER, PASSWORD)
     try:
@@ -107,7 +105,3 @@ def carga_neo4j():
         print(f"ERROR! {e}")
     finally:
         inserter.close()
-
-
-if __name__ == "__main__":
-    carga_neo4j()
