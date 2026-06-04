@@ -4,135 +4,421 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SonicMesh — Selector de Playlist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --pink:        #e8a0b0;
+      --blush:  #f5d5dc;
+      --frost:   #fdf0f2;
+      --rose:    #d4718a;
+      --charcoal:    #1e1a1b;
+      --ink:  #2e2829;
+      --stone:       #7a6f71;
+      --mist: #b3a8aa;
+      --cream:       #faf7f8;
+      --white:       #ffffff;
+      --border:      #ecdde0;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f13; color: #e0e0e0; min-height: 100vh; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
 
     header {
-      background: #1a1a24;
-      padding: 18px 32px;
+      background: var(--white);
+      padding: 0 36px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #2a2a3a;
-    }
-    header h1 { font-size: 1.4rem; color: #a78bfa; letter-spacing: 1px; }
-    .usuario-wrap { display: flex; align-items: center; gap: 10px; }
-    .usuario-wrap label { font-size: 0.85rem; color: #888; }
-    .usuario-wrap input {
-      background: #252535; border: 1px solid #3a3a50; border-radius: 6px;
-      color: #e0e0e0; padding: 6px 10px; font-size: 0.9rem; width: 140px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .layout { display: grid; grid-template-columns: 1fr 340px; gap: 0; height: calc(100vh - 61px); }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-    /* Panel izquierdo */
-    .panel-canciones { padding: 24px; overflow-y: auto; border-right: 1px solid #2a2a3a; }
-    .filtros { display: flex; gap: 10px; margin-bottom: 20px; }
-    .filtros input, .filtros select {
-      flex: 1; background: #1e1e2e; border: 1px solid #3a3a50; border-radius: 8px;
-      color: #e0e0e0; padding: 9px 14px; font-size: 0.9rem;
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      margin-top: 6px;
     }
-    .filtros input:focus, .filtros select:focus { outline: none; border-color: #a78bfa; }
 
-    .lista-canciones { display: flex; flex-direction: column; gap: 8px; }
-    .cancion-card {
-      background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 10px;
-      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
-      transition: border-color 0.15s;
+    .wordmark span {
+      color: var(--rose);
     }
-    .cancion-card:hover { border-color: #a78bfa44; }
-    .cancion-card.en-carrito { border-color: #a78bfa; background: #1e1a2e; }
-    .cancion-info { flex: 1; min-width: 0; }
-    .cancion-nombre { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cancion-artista { font-size: 0.8rem; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .cancion-genero { font-size: 0.75rem; color: #a78bfa99; margin-top: 3px; }
-    .btn-agregar {
-      background: #a78bfa22; border: 1px solid #a78bfa55; color: #a78bfa;
-      border-radius: 7px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer;
-      white-space: nowrap; transition: background 0.15s;
+
+    .user-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .btn-agregar:hover { background: #a78bfa44; }
-    .btn-agregar.agregado { background: #a78bfa33; color: #c4b5fd; }
-    .btn-quitar {
-      background: #ff4d6d22; border: 1px solid #ff4d6d55; color: #ff4d6d;
-      border-radius: 7px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer;
+
+    .user-field label {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mist);
+    }
+
+    .user-field input {
+      background: var(--frost);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--charcoal);
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      width: 140px;
+      transition: border-color 0.2s;
+    }
+
+    .user-field input:focus {
+      outline: none;
+      border-color: var(--pink);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      height: calc(100vh - 64px);
+    }
+    .browser {
+      padding: 28px 32px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: var(--cream);
+    }
+
+    .filtros {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .filtros input,
+    .filtros select {
+      flex: 1;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--charcoal);
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    .filtros input::placeholder { color: var(--mist); }
+
+    .filtros input:focus,
+    .filtros select:focus {
+      outline: none;
+      border-color: var(--pink);
+    }
+
+    .tracklist {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .track {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    .track:hover {
+      border-color: var(--pink);
+      box-shadow: 0 2px 10px rgba(232,160,176,0.15);
+    }
+
+    .track.selected {
+      border-color: var(--pink);
+      background: var(--frost);
+    }
+
+    .track-meta { flex: 1; min-width: 0; }
+
+    .track-title {
+      font-size: 0.9rem;
+      font-weight: 500;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--charcoal);
     }
-    .no-resultados { color: #555; text-align: center; padding: 40px 0; font-size: 0.9rem; }
 
-    /* Panel derecho — carrito */
-    .panel-carrito { display: flex; flex-direction: column; background: #13131c; }
-    .carrito-header { padding: 20px 20px 12px; border-bottom: 1px solid #2a2a3a; }
-    .carrito-header h2 { font-size: 1rem; color: #c4b5fd; }
-    .carrito-contador { font-size: 0.8rem; color: #666; margin-top: 3px; }
-    .carrito-lista { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
-    .carrito-item {
-      background: #1a1a24; border-radius: 8px; padding: 10px 12px;
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    .track-artist {
+      font-size: 0.78rem;
+      color: var(--stone);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .carrito-item-nombre { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .carrito-item-artista { font-size: 0.75rem; color: #777; }
-    .btn-x { background: none; border: none; color: #555; cursor: pointer; font-size: 1rem; padding: 2px 4px; }
-    .btn-x:hover { color: #ff4d6d; }
-    .carrito-vacio { color: #444; text-align: center; padding: 30px 0; font-size: 0.85rem; }
 
-    .carrito-footer { padding: 16px; border-top: 1px solid #2a2a3a; }
-    .btn-confirmar {
-      width: 100%; background: linear-gradient(135deg, #a78bfa, #7c3aed);
-      border: none; color: white; border-radius: 10px; padding: 13px;
-      font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    .track-tag {
+      font-size: 0.72rem;
+      color: var(--rose);
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
-    .btn-confirmar:hover:not(:disabled) { opacity: 0.88; }
-    .btn-confirmar:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .btn-add {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--stone);
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .btn-add:hover {
+      border-color: var(--rose);
+      color: var(--rose);
+      background: var(--frost);
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: 1px solid var(--blush);
+      color: var(--rose);
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-remove:hover {
+      background: var(--frost);
+    }
+
+    .no-results {
+      color: var(--mist);
+      text-align: center;
+      padding: 48px 0;
+      font-size: 0.85rem;
+    }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      background: var(--white);
+    }
+
+    .sidebar-top {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-top h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      letter-spacing: 0.03em;
+    }
+
+    .tally {
+      font-size: 0.75rem;
+      color: var(--mist);
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .pick {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .pick-title {
+      font-size: 0.82rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--charcoal);
+    }
+
+    .pick-artist {
+      font-size: 0.72rem;
+      color: var(--mist);
+      margin-top: 2px;
+    }
+
+    .btn-x {
+      background: none;
+      border: none;
+      color: var(--mist);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 2px 5px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-x:hover { color: var(--rose); }
+
+    .empty-state {
+      color: var(--mist);
+      text-align: center;
+      padding: 36px 0;
+      font-size: 0.82rem;
+    }
+
+    .sidebar-bottom {
+      padding: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--charcoal);
+      border: none;
+      color: var(--white);
+      border-radius: 5px;
+      padding: 13px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--ink);
+    }
+
+    .btn-submit:disabled {
+      background: var(--border);
+      color: var(--mist);
+      cursor: not-allowed;
+    }
 
     .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: #1e1e2e; border: 1px solid #a78bfa; color: #c4b5fd;
-      padding: 10px 22px; border-radius: 8px; font-size: 0.88rem;
-      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--charcoal);
+      color: var(--white);
+      padding: 10px 22px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+      letter-spacing: 0.02em;
     }
-    .toast.visible { opacity: 1; }
-    .toast.error { border-color: #ff4d6d; color: #ff4d6d; }
 
-    .loading { color: #555; text-align: center; padding: 40px 0; }
+    .toast.visible { opacity: 1; }
+
+    .toast.error {
+      background: var(--rose);
+    }
+
+    .loading {
+      color: var(--mist);
+      text-align: center;
+      padding: 40px 0;
+      font-size: 0.85rem;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blush); }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🎵 SonicMesh</h1>
-  <div class="usuario-wrap">
-    <label>Usuario:</label>
-    <input type="text" id="input-usuario" placeholder="Tu nombre" value="Chen">
+  <div class="logo">
+    <svg viewBox="0 0 94 62" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:32px;width:auto;display:block;flex-shrink:0;">
+      <rect x="0"  y="48" width="8" height="12" rx="4" fill="#1e1a1b"/>
+      <rect x="11" y="28" width="8" height="32" rx="4" fill="#1e1a1b"/>
+      <rect x="22" y="36" width="8" height="24" rx="4" fill="#1e1a1b"/>
+      <rect x="33" y="6"  width="8" height="54" rx="4" fill="#e8909f"/>
+      <rect x="44" y="34" width="8" height="26" rx="4" fill="#e8909f"/>
+      <rect x="55" y="0"  width="8" height="60" rx="4" fill="#e8909f"/>
+      <rect x="66" y="14" width="8" height="46" rx="4" fill="#1e1a1b"/>
+      <rect x="77" y="36" width="8" height="24" rx="4" fill="#1e1a1b"/>
+      <rect x="88" y="48" width="8" height="12" rx="4" fill="#1e1a1b"/>
+    </svg>
+    <div class="wordmark">Sonic<span>Mesh</span></div>
+  </div>
+  <div class="user-field">
+    <label>Usuario</label>
+    <input type="text" id="input-usuario" placeholder="Tu nombre" value="">
   </div>
 </header>
 
 <div class="layout">
-  <!-- Canciones -->
-  <div class="panel-canciones">
+  <div class="browser">
     <div class="filtros">
       <input type="text" id="input-busqueda" placeholder="Buscar canción o artista..." oninput="buscarDebounce()">
       <select id="select-genero" onchange="buscar()">
         <option value="">Todos los géneros</option>
       </select>
     </div>
-    <div class="lista-canciones" id="lista-canciones">
-      <div class="loading">Cargando canciones...</div>
+    <div class="tracklist" id="tracklist">
+      <div class="loading">Cargando canciones…</div>
     </div>
   </div>
 
-  <!-- Carrito -->
-  <div class="panel-carrito">
-    <div class="carrito-header">
+  <div class="sidebar">
+    <div class="sidebar-top">
       <h2>Mi selección</h2>
-      <div class="carrito-contador" id="carrito-contador">0 canciones</div>
+      <div class="tally" id="tally">0 canciones</div>
     </div>
-    <div class="carrito-lista" id="carrito-lista">
-      <div class="carrito-vacio">Todavía no agregaste canciones</div>
+    <div class="sidebar-list" id="sidebar-list">
+      <div class="empty-state">Todavía no agregaste canciones</div>
     </div>
-    <div class="carrito-footer">
-      <button class="btn-confirmar" id="btn-confirmar" onclick="confirmar()" disabled>
+    <div class="sidebar-bottom">
+      <button class="btn-submit" id="btn-submit" onclick="confirmar()" disabled>
         Confirmar y cargar a Neo4j
       </button>
     </div>
@@ -142,14 +428,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  let carrito = [];   // URIs en el carrito
+  let carrito = [];
   let debounceTimer;
 
   function usuario() {
     return document.getElementById("input-usuario").value.trim() || "usuario";
   }
 
-  // ── Géneros ────────────────────────────────────────────────────────────────
   async function cargarGeneros() {
     const res = await fetch("/api/generos");
     const generos = await res.json();
@@ -161,7 +446,6 @@
     });
   }
 
-  // ── Búsqueda ───────────────────────────────────────────────────────────────
   function buscarDebounce() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(buscar, 300);
@@ -173,37 +457,35 @@
     const params = new URLSearchParams();
     if (q)      params.set("q", q);
     if (genero) params.set("genero", genero);
-
-    const res      = await fetch(`/api/canciones?${params}`);
+    const res       = await fetch(`/api/canciones?${params}`);
     const canciones = await res.json();
     renderCanciones(canciones);
   }
 
   function renderCanciones(canciones) {
-    const lista = document.getElementById("lista-canciones");
+    const lista = document.getElementById("tracklist");
     if (!canciones.length) {
-      lista.innerHTML = '<div class="no-resultados">Sin resultados</div>';
+      lista.innerHTML = '<div class="no-results">Sin resultados</div>';
       return;
     }
     lista.innerHTML = canciones.map(c => {
       const enCarrito = carrito.includes(c.uri);
       const artistas  = Array.isArray(c.artistas) ? c.artistas.join(", ") : (c.artistas || "");
       return `
-        <div class="cancion-card ${enCarrito ? 'en-carrito' : ''}" id="card-${btoa(c.uri).replace(/=/g,'')}">
-          <div class="cancion-info">
-            <div class="cancion-nombre">${c.nombre || "Sin nombre"}</div>
-            <div class="cancion-artista">${artistas}</div>
-            <div class="cancion-genero">${c.generos || ""}</div>
+        <div class="track ${enCarrito ? 'selected' : ''}" id="card-${btoa(c.uri).replace(/=/g,'')}">
+          <div class="track-meta">
+            <div class="track-title">${c.nombre || "Sin nombre"}</div>
+            <div class="track-artist">${artistas}</div>
+            <div class="track-tag">${c.generos || ""}</div>
           </div>
           ${enCarrito
-            ? `<button class="btn-quitar" onclick="quitar('${c.uri}')">Quitar</button>`
-            : `<button class="btn-agregar" onclick="agregar('${c.uri}', '${(c.nombre||'').replace(/'/g,"\\'")}', '${artistas.replace(/'/g,"\\'")}')">+ Agregar</button>`
+            ? `<button class="btn-remove" onclick="quitar('${c.uri}')">Quitar</button>`
+            : `<button class="btn-add" onclick="agregar('${c.uri}', '${(c.nombre||'').replace(/'/g,"\\'")}', '${artistas.replace(/'/g,"\\'")}')">+ Agregar</button>`
           }
         </div>`;
     }).join("");
   }
 
-  // ── Carrito ────────────────────────────────────────────────────────────────
   async function agregar(uri, nombre, artista) {
     const res = await fetch(`/api/carrito/${usuario()}/agregar`, {
       method: "POST",
@@ -235,55 +517,53 @@
     const data = await res.json();
     carrito    = data.map(c => c.uri);
 
-    const lista = document.getElementById("carrito-lista");
-    const contador = document.getElementById("carrito-contador");
-    const btnConfirmar = document.getElementById("btn-confirmar");
+    const lista       = document.getElementById("sidebar-list");
+    const contador    = document.getElementById("tally");
+    const btnConfirmar = document.getElementById("btn-submit");
 
     contador.textContent = `${data.length} canción${data.length !== 1 ? "es" : ""}`;
     btnConfirmar.disabled = data.length === 0;
 
     if (!data.length) {
-      lista.innerHTML = '<div class="carrito-vacio">Todavía no agregaste canciones</div>';
+      lista.innerHTML = '<div class="empty-state">Todavía no agregaste canciones</div>';
       return;
     }
     lista.innerHTML = data.map(c => {
       const artistas = Array.isArray(c.artistas) ? c.artistas.join(", ") : (c.artistas || "");
       return `
-        <div class="carrito-item">
+        <div class="pick">
           <div style="min-width:0">
-            <div class="carrito-item-nombre">${c.nombre || "Sin nombre"}</div>
-            <div class="carrito-item-artista">${artistas}</div>
+            <div class="pick-title">${c.nombre || "Sin nombre"}</div>
+            <div class="pick-artist">${artistas}</div>
           </div>
           <button class="btn-x" onclick="quitar('${c.uri}')" title="Quitar">✕</button>
         </div>`;
     }).join("");
   }
 
-  // ── Confirmar ──────────────────────────────────────────────────────────────
   async function confirmar() {
-    const btn = document.getElementById("btn-confirmar");
+    const btn = document.getElementById("btn-submit");
     btn.disabled = true;
-    btn.textContent = "Cargando...";
+    btn.textContent = "Cargando…";
     try {
       const res  = await fetch(`/api/carrito/${usuario()}/confirmar`, { method: "POST" });
       const data = await res.json();
       if (data.ok) {
-        mostrarToast(`✅ ${data.insertadas} canciones cargadas a Neo4j`);
+        mostrarToast(`✓ ${data.insertadas} canciones cargadas`);
         carrito = [];
         actualizarCarrito();
         buscar();
       } else {
-        mostrarToast(`❌ ${data.error}`, true);
+        mostrarToast(`Error: ${data.error}`, true);
       }
     } catch(e) {
-      mostrarToast("❌ Error al conectar con el servidor", true);
+      mostrarToast("Error al conectar con el servidor", true);
     } finally {
       btn.disabled = false;
       btn.textContent = "Confirmar y cargar a Neo4j";
     }
   }
 
-  // ── Toast ──────────────────────────────────────────────────────────────────
   function mostrarToast(msg, esError = false) {
     const t = document.getElementById("toast");
     t.textContent = msg;
@@ -291,7 +571,6 @@
     setTimeout(() => t.className = "toast", 2800);
   }
 
-  // ── Init ───────────────────────────────────────────────────────────────────
   document.getElementById("input-usuario").addEventListener("change", actualizarCarrito);
 
   cargarGeneros();

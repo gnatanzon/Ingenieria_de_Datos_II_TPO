@@ -6,7 +6,7 @@ from voyager import Index, Space
 URI              = "bolt://localhost:7687"
 USER             = "neo4j"
 PASSWORD         = "guillermina"
-USUARIO_OBJETIVO = "Camila"
+USUARIO_OBJETIVO = "Carla"
 TOP_AMIGAS       = 2
 TOP_RECOMENDADAS = 10
 FEATURES         = ['bailabilidad', 'energia', 'valencia', 'tempo',
@@ -118,8 +118,13 @@ with driver.session() as session:
                                                        top_amigas=top_amigas)]
 driver.close()
 
-df_artistas = pd.DataFrame(artistas_records).dropna(subset=FEATURES).reset_index(drop=True)
-df_generos  = pd.DataFrame(generos_records).dropna(subset=FEATURES).reset_index(drop=True)
+df_artistas = pd.DataFrame(artistas_records)
+df_artistas[FEATURES] = df_artistas[FEATURES].apply(pd.to_numeric, errors='coerce')
+df_artistas = df_artistas.dropna(subset=FEATURES).reset_index(drop=True)
+
+df_generos = pd.DataFrame(generos_records)
+df_generos[FEATURES] = df_generos[FEATURES].apply(pd.to_numeric, errors='coerce')
+df_generos = df_generos.dropna(subset=FEATURES).reset_index(drop=True)
 
 uris_artistas = set(df_artistas['uri'].tolist()) if not df_artistas.empty else set()
 df_generos = df_generos[~df_generos['uri'].isin(uris_artistas)].reset_index(drop=True)
@@ -146,14 +151,15 @@ with driver.session() as session:
     perfil_records = [r.data() for r in session.run(query_perfil, target_user=USUARIO_OBJETIVO)]
 driver.close()
 
-df_perfil = pd.DataFrame(perfil_records).dropna()
+df_perfil = pd.DataFrame(perfil_records)
+df_perfil[FEATURES] = df_perfil[FEATURES].apply(pd.to_numeric, errors='coerce')
+df_perfil = df_perfil.dropna(subset=FEATURES).reset_index(drop=True)
 
 if df_perfil.empty:
     print("No se pudo encontrar canciones.")
     exit()
 
 vector_usuario = df_perfil[FEATURES].mean().to_numpy().astype('float32')
-
 
 df_pool = pd.concat([df_artistas, df_generos], ignore_index=True)
 pool_vectors = df_pool[FEATURES].to_numpy().astype('float32')
@@ -173,13 +179,13 @@ for idx, dist in zip(neighbors, distances):
         uris_resultado.append(uri)
         resultado_filas.append((df_pool.loc[idx, 'nombre']))
 
-for idx, dist in zip(neighbors, distances):
-    if len(resultado_filas) >= TOP_RECOMENDADAS:
-        break
+elementos_faltantes = TOP_RECOMENDADAS - len(resultado_filas)
+
+for idx, dist in list(zip(neighbors, distances))[:elementos_faltantes]:
     uri = df_pool.loc[idx, 'uri']
     if uri not in uris_artistas and uri not in uris_resultado:
         uris_resultado.append(uri)
-        resultado_filas.append((df_pool.loc[idx, 'nombre']))
+        resultado_filas.append(df_pool.loc[idx, 'nombre'])
 
 print(f"RECOMENDACIONES PARA {USUARIO_OBJETIVO.upper()}")
 print(f"De las playlists de: {', '.join(top_amigas)}\n")

@@ -5,16 +5,16 @@ import sys
 
 from flask import Flask, jsonify, render_template, request
 
-
 BASE_DIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(BASE_DIR, "mongodb"))
-sys.path.insert(0, os.path.join(BASE_DIR, "redis"))
-sys.path.insert(0, os.path.join(BASE_DIR, "neo4j"))
+sys.path.insert(0, BASE_DIR)
 
-from mongodb_db import mongo_analytics as mongo
-from redis_db   import carrito_redis   as red_cart
-from neo4j_db import carga_neo4j
+from mongodb_db  import mongo_analytics as mongo
+from redis_db import carrito_redis   as red_cart
+from neo4j_db import carga_neo4j     as neo4j_mod
 
+carga_neo4j = neo4j_mod.carga_neo4j
+
+# ── Constantes CSV ─────────────────────────────────────────────────────────────
 CSV_COLUMNAS = [
     "Track URI", "Track Name", "Artist Name(s)", "Album Name",
     "Release Date", "Record Label", "Duration (ms)", "Popularity",
@@ -42,6 +42,7 @@ MONGO_A_CSV = {
 }
 
 
+# ── Helper: convertir doc MongoDB a fila CSV ──────────────────────────────────
 def doc_a_fila_csv(doc: dict, usuario: str) -> dict:
     fila = {col: "" for col in CSV_COLUMNAS}
     for mongo_key, csv_col in MONGO_A_CSV.items():
@@ -61,6 +62,7 @@ def doc_a_fila_csv(doc: dict, usuario: str) -> dict:
     return fila
 
 
+# ── Flask app ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 
 
@@ -124,16 +126,19 @@ def confirmar(usuario):
 
     csv_content = output.getvalue()
 
+    # 2. Guardar CSV en disco (para que carga_neo4j lo lea)
     csv_path = os.path.join(BASE_DIR, "neo4j", "playlist_nueva.csv")
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
         f.write(csv_content)
 
+    # 3. Cargar a Neo4j
     try:
         carga_neo4j(csv_path)
     except Exception as e:
         return jsonify({"error": f"Neo4j: {str(e)}"}), 500
 
+    # 4. Vaciar carrito en Redis
     red_cart.vaciar_carrito(usuario)
 
     return jsonify({"ok": True, "insertadas": len(uris)})

@@ -1,10 +1,14 @@
 import os
+import sys
 import pandas as pd
 from neo4j import GraphDatabase
 
-URI = "bolt://localhost:7687"
-USER = "neo4j"
+URI      = "bolt://localhost:7687"
+USER     = "neo4j"
 PASSWORD = "guillermina"
+
+CSV_PLAYLISTS = os.path.join(os.path.dirname(__file__), "playlists.csv")
+CSV_NUEVA     = os.path.join(os.path.dirname(__file__), "playlist_nueva.csv")
 
 
 class Neo4jPlaylistInserter:
@@ -28,8 +32,7 @@ class Neo4jPlaylistInserter:
                 params = row.to_dict()
 
                 artists = [a.strip() for a in str(params['Artist Name(s)']).split(';')]
-
-                genres = [g.strip().lower() for g in str(params.get('Genres', '')).split(',') if g.strip()]
+                genres  = [g.strip().lower() for g in str(params.get('Genres', '')).split(',') if g.strip()]
 
                 query = """
                 MERGE (u:User {nombre: $user_name})
@@ -38,19 +41,19 @@ class Neo4jPlaylistInserter:
                 ON CREATE SET al.fecha_de_lanzamiento = $release_date, al.discografica = $record_label
 
                 MERGE (t:Track {uri: $track_uri})
-                ON CREATE SET t.nombre = $track_name,
-                              t.duracion_ms = $duration,
-                              t.explicito = $explicit,
-                              t.bailabilidad = $danceability,
-                              t.energia = $energy,
-                              t.valencia = $valence,
-                              t.tempo = $tempo,
-                              t.sonoridad = $loudness,
-                              t.vivacidad = $liveness,
-                              t.instrumentalidad = $instrumentalness,
-                              t.acustica = $acousticness,
-                              t.discursividad = $speechiness
-                ON MATCH SET t.popularidad = $popularity 
+                SET t.nombre           = $track_name,
+                    t.duracion_ms      = $duration,
+                    t.explicito        = $explicit,
+                    t.bailabilidad     = $danceability,
+                    t.energia          = $energy,
+                    t.valencia         = $valence,
+                    t.tempo            = $tempo,
+                    t.sonoridad        = $loudness,
+                    t.vivacidad        = $liveness,
+                    t.instrumentalidad = $instrumentalness,
+                    t.acustica         = $acousticness,
+                    t.discursividad    = $speechiness,
+                    t.popularidad      = $popularity
 
                 MERGE (t)-[:PERTENECE_A]->(al)
                 MERGE (u)-[:AGREGO]->(t)
@@ -68,40 +71,41 @@ class Neo4jPlaylistInserter:
                 """
 
                 session.run(query,
-                            user_name=params['Added By'],
-                            album_name=params['Album Name'],
-                            release_date=params['Release Date'],
-                            record_label=params['Record Label'],
-                            track_uri=params['Track URI'],
-                            track_name=params['Track Name'],
-                            duration=params['Duration (ms)'],
-                            explicit=params['Explicit'],
-                            popularity=params['Popularity'],
-                            danceability=params['Danceability'],
-                            valence=params['Valence'],
-                            tempo=params['Tempo'],
-                            energy=params['Energy'],
-                            loudness=params['Loudness'],
-                            acousticness=params['Acousticness'],
-                            liveness=params['Liveness'],
-                            speechiness=params['Speechiness'],
-                            instrumentalness=params['Instrumentalness'],
-                            artist_list=artists,
-                            genre_list=genres)
+                            user_name        = params['Added By'],
+                            album_name       = params['Album Name'],
+                            release_date     = params['Release Date'],
+                            record_label     = params['Record Label'],
+                            track_uri        = params['Track URI'],
+                            track_name       = params['Track Name'],
+                            duration         = params['Duration (ms)'],
+                            explicit         = params['Explicit'],
+                            popularity       = params['Popularity'],
+                            danceability     = params['Danceability'],
+                            valence          = params['Valence'],
+                            tempo            = params['Tempo'],
+                            energy           = params['Energy'],
+                            loudness         = params['Loudness'],
+                            acousticness     = params['Acousticness'],
+                            liveness         = params['Liveness'],
+                            speechiness      = params['Speechiness'],
+                            instrumentalness = params['Instrumentalness'],
+                            artist_list      = artists,
+                            genre_list       = genres)
 
 
 def carga_neo4j(playlist):
-    playlist_files = [playlist]
-
     inserter = Neo4jPlaylistInserter(URI, USER, PASSWORD)
     try:
-        for file in playlist_files:
-            if os.path.exists(file):
-                inserter.insert_playlist_file(file)
-            else:
-                print(f"{file} no existe")
+        if os.path.exists(playlist):
+            inserter.insert_playlist_file(playlist)
+        else:
+            print(f"{playlist} no existe")
         print("\narchivos insertados con éxito")
     except Exception as e:
         print(f"ERROR! {e}")
     finally:
         inserter.close()
+
+
+if __name__ == "__main__":
+        carga_neo4j(CSV_PLAYLISTS)
