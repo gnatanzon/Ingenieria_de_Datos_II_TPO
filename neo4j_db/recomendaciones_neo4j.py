@@ -6,7 +6,7 @@ from voyager import Index, Space
 URI              = "bolt://localhost:7687"
 USER             = "neo4j"
 PASSWORD         = "guillermina"
-USUARIO_OBJETIVO = "Carla"
+USUARIO_OBJETIVO = None
 TOP_AMIGAS       = 2
 TOP_RECOMENDADAS = 10
 FEATURES         = ['bailabilidad', 'energia', 'valencia', 'tempo',
@@ -38,28 +38,6 @@ RETURN amiga.nombre AS amiga,
        (canciones_en_comun * 4 + albumes_en_comun * 3 + artistas_en_comun * 2 + generos_en_comun * 1) AS puntaje_afinidad
 ORDER BY puntaje_afinidad DESC
 """
-
-print(f"Calculando afinidad social para '{USUARIO_OBJETIVO}'...")
-driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
-with driver.session() as session:
-    records = [r.data() for r in session.run(query_afinidad, target_user=USUARIO_OBJETIVO)]
-driver.close()
-
-df_afinidad = pd.DataFrame(records)
-
-if df_afinidad.empty:
-    print("No se encontró afinidad.")
-    exit()
-
-top_amigas = df_afinidad.head(TOP_AMIGAS)['amiga'].tolist()
-
-print(f"\nTop {TOP_AMIGAS} amigas más afines:")
-for _, row in df_afinidad.head(TOP_AMIGAS).iterrows():
-    print(f"  • {row['amiga']} → {int(row['puntaje_afinidad'])} pts "
-          f"({int(row['canciones_en_comun'])} canciones, "
-          f"{int(row['albumes_en_comun'])} álbumes, "
-          f"{int(row['artistas_en_comun'])} artistas, "
-          f"{int(row['generos_en_comun'])} géneros en común)")
 
 query_artistas_comun = """
 MATCH (yo:User {nombre: $target_user})-[:AGREGO]->(:Track)<-[:INTERPRETA]-(a:Artista)
@@ -107,32 +85,6 @@ RETURN DISTINCT
     candidata.discursividad    AS discursividad
 """
 
-print(f"\nBuscando canciones candidatas de {top_amigas}...")
-driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
-with driver.session() as session:
-    artistas_records = [r.data() for r in session.run(query_artistas_comun,
-                                                       target_user=USUARIO_OBJETIVO,
-                                                       top_amigas=top_amigas)]
-    generos_records  = [r.data() for r in session.run(query_generos_comun,
-                                                       target_user=USUARIO_OBJETIVO,
-                                                       top_amigas=top_amigas)]
-driver.close()
-
-df_artistas = pd.DataFrame(artistas_records)
-df_artistas[FEATURES] = df_artistas[FEATURES].apply(pd.to_numeric, errors='coerce')
-df_artistas = df_artistas.dropna(subset=FEATURES).reset_index(drop=True)
-
-df_generos = pd.DataFrame(generos_records)
-df_generos[FEATURES] = df_generos[FEATURES].apply(pd.to_numeric, errors='coerce')
-df_generos = df_generos.dropna(subset=FEATURES).reset_index(drop=True)
-
-uris_artistas = set(df_artistas['uri'].tolist()) if not df_artistas.empty else set()
-df_generos = df_generos[~df_generos['uri'].isin(uris_artistas)].reset_index(drop=True)
-
-if df_artistas.empty and df_generos.empty:
-    print("No se encontraron recomendaciones.")
-    exit()
-
 query_perfil = """
 MATCH (u:User {nombre: $target_user})-[:AGREGO]->(t:Track)
 RETURN t.bailabilidad      AS bailabilidad,
@@ -146,49 +98,113 @@ RETURN t.bailabilidad      AS bailabilidad,
        t.discursividad     AS discursividad
 """
 
-driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
-with driver.session() as session:
-    perfil_records = [r.data() for r in session.run(query_perfil, target_user=USUARIO_OBJETIVO)]
-driver.close()
 
-df_perfil = pd.DataFrame(perfil_records)
-df_perfil[FEATURES] = df_perfil[FEATURES].apply(pd.to_numeric, errors='coerce')
-df_perfil = df_perfil.dropna(subset=FEATURES).reset_index(drop=True)
+def recomendar(usuario_objetivo=USUARIO_OBJETIVO, top_amigas_n=TOP_AMIGAS, top_recomendadas_n=TOP_RECOMENDADAS):
+    """
+    Función llamada desde app.py. Ejecuta todas las queries y devuelve
+    un dict con 'afinidad' y 'recomendaciones' listo para jsonify().
+    """
+    print(f"Calculando afinidad social para '{usuario_objetivo}'...")
+    driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+    with driver.session() as session:
+        records = [r.data() for r in session.run(query_afinidad, target_user=usuario_objetivo)]
+    driver.close()
 
-if df_perfil.empty:
-    print("No se pudo encontrar canciones.")
-    exit()
+    df_afinidad = pd.DataFrame(records)
 
-vector_usuario = df_perfil[FEATURES].mean().to_numpy().astype('float32')
+    if df_afinidad.empty:
+        return {"error": f"No se encontró afinidad para '{usuario_objetivo}'."}
 
-df_pool = pd.concat([df_artistas, df_generos], ignore_index=True)
-pool_vectors = df_pool[FEATURES].to_numpy().astype('float32')
+    top_amigas = df_afinidad.head(top_amigas_n)['amiga'].tolist()
 
-index = Index(Space.Euclidean, num_dimensions=len(FEATURES))
-index.add_items(pool_vectors)
+    print(f"\nTop {top_amigas_n} amigas más afines:")
+    for _, row in df_afinidad.head(top_amigas_n).iterrows():
+        print(f"  • {row['amiga']} → {int(row['puntaje_afinidad'])} pts "
+              f"({int(row['canciones_en_comun'])} canciones, "
+              f"{int(row['albumes_en_comun'])} álbumes, "
+              f"{int(row['artistas_en_comun'])} artistas, "
+              f"{int(row['generos_en_comun'])} géneros en común)")
 
-k = min(len(df_pool), TOP_RECOMENDADAS + len(df_artistas))
-neighbors, distances = index.query(vector_usuario, k=k)
+    print(f"\nBuscando canciones candidatas de {top_amigas}...")
+    driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+    with driver.session() as session:
+        artistas_records = [r.data() for r in session.run(query_artistas_comun,
+                                                           target_user=usuario_objetivo,
+                                                           top_amigas=top_amigas)]
+        generos_records  = [r.data() for r in session.run(query_generos_comun,
+                                                           target_user=usuario_objetivo,
+                                                           top_amigas=top_amigas)]
+    driver.close()
 
-uris_resultado   = []
-resultado_filas  = []
+    df_artistas = pd.DataFrame(artistas_records)
+    df_artistas[FEATURES] = df_artistas[FEATURES].apply(pd.to_numeric, errors='coerce')
+    df_artistas = df_artistas.dropna(subset=FEATURES).reset_index(drop=True)
 
-for idx, dist in zip(neighbors, distances):
-    uri = df_pool.loc[idx, 'uri']
-    if uri in uris_artistas and uri not in uris_resultado:
-        uris_resultado.append(uri)
-        resultado_filas.append((df_pool.loc[idx, 'nombre']))
+    df_generos = pd.DataFrame(generos_records)
+    df_generos[FEATURES] = df_generos[FEATURES].apply(pd.to_numeric, errors='coerce')
+    df_generos = df_generos.dropna(subset=FEATURES).reset_index(drop=True)
 
-elementos_faltantes = TOP_RECOMENDADAS - len(resultado_filas)
+    uris_artistas = set(df_artistas['uri'].tolist()) if not df_artistas.empty else set()
+    df_generos = df_generos[~df_generos['uri'].isin(uris_artistas)].reset_index(drop=True)
 
-for idx, dist in list(zip(neighbors, distances))[:elementos_faltantes]:
-    uri = df_pool.loc[idx, 'uri']
-    if uri not in uris_artistas and uri not in uris_resultado:
-        uris_resultado.append(uri)
-        resultado_filas.append(df_pool.loc[idx, 'nombre'])
+    if df_artistas.empty and df_generos.empty:
+        return {"error": "No se encontraron recomendaciones.",
+                "afinidad": df_afinidad.head(top_amigas_n).to_dict(orient="records")}
 
-print(f"RECOMENDACIONES PARA {USUARIO_OBJETIVO.upper()}")
-print(f"De las playlists de: {', '.join(top_amigas)}\n")
+    driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+    with driver.session() as session:
+        perfil_records = [r.data() for r in session.run(query_perfil, target_user=usuario_objetivo)]
+    driver.close()
 
-for rank, (nombre) in enumerate(resultado_filas, 1):
-    print(f"{rank:>2}. '{nombre}'")
+    df_perfil = pd.DataFrame(perfil_records)
+    df_perfil[FEATURES] = df_perfil[FEATURES].apply(pd.to_numeric, errors='coerce')
+    df_perfil = df_perfil.dropna(subset=FEATURES).reset_index(drop=True)
+
+    if df_perfil.empty:
+        return {"error": "No se pudo encontrar canciones.",
+                "afinidad": df_afinidad.head(top_amigas_n).to_dict(orient="records")}
+
+    vector_usuario = df_perfil[FEATURES].mean().to_numpy().astype('float32')
+
+    df_pool = pd.concat([df_artistas, df_generos], ignore_index=True)
+    pool_vectors = df_pool[FEATURES].to_numpy().astype('float32')
+
+    index = Index(Space.Euclidean, num_dimensions=len(FEATURES))
+    index.add_items(pool_vectors)
+
+    k = min(len(df_pool), top_recomendadas_n + len(df_artistas))
+    neighbors, distances = index.query(vector_usuario, k=k)
+
+    uris_resultado  = []
+    resultado_filas = []
+
+    for idx, dist in zip(neighbors, distances):
+        uri = df_pool.loc[idx, 'uri']
+        if uri in uris_artistas and uri not in uris_resultado:
+            uris_resultado.append(uri)
+            resultado_filas.append({"nombre": df_pool.loc[idx, 'nombre'], "uri": uri, "tipo": "artista"})
+
+    elementos_faltantes = top_recomendadas_n - len(resultado_filas)
+
+    for idx, dist in list(zip(neighbors, distances))[:elementos_faltantes + len(df_artistas)]:
+        uri = df_pool.loc[idx, 'uri']
+        if uri not in uris_artistas and uri not in uris_resultado:
+            uris_resultado.append(uri)
+            resultado_filas.append({"nombre": df_pool.loc[idx, 'nombre'], "uri": uri, "tipo": "genero"})
+            if len(resultado_filas) >= top_recomendadas_n:
+                break
+
+    print(f"\nRECOMENDACIONES PARA {usuario_objetivo.upper()}")
+    print(f"De las playlists de: {', '.join(top_amigas)}\n")
+    for rank, r in enumerate(resultado_filas, 1):
+        print(f"{rank:>2}. '{r['nombre']}'")
+
+    return {
+        "afinidad":        df_afinidad.head(top_amigas_n).to_dict(orient="records"),
+        "recomendaciones": resultado_filas,
+    }
+
+
+if __name__ == "__main__":
+    usuario = input("Usuario: ").strip()
+    recomendar(usuario)

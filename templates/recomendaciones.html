@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SonicMesh — Recomendaciones</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink:      #e8a0b0;
+      --blush:     #f5d5dc;
+      --frost:     #fdf0f2;
+      --rose:      #d4718a;
+      --charcoal:  #1e1a1b;
+      --ink:       #2e2829;
+      --stone:     #7a6f71;
+      --mist:      #b3a8aa;
+      --cream:     #faf7f8;
+      --white:     #ffffff;
+      --border:    #ecdde0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--white);
+      padding: 0 36px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      margin-top: 6px;
+    }
+
+    .wordmark span { color: var(--rose); }
+
+    nav {
+      display: flex;
+      gap: 6px;
+    }
+
+    nav a {
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--mist);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    nav a:hover { color: var(--charcoal); background: var(--frost); }
+    nav a.active { color: var(--rose); background: var(--frost); }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--charcoal);
+      line-height: 1.1;
+    }
+
+    .page-header h1 em {
+      font-style: italic;
+      color: var(--rose);
+    }
+
+    .page-header p {
+      font-size: 0.85rem;
+      color: var(--stone);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    .controles {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .campo label {
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mist);
+    }
+
+    .campo input, .campo select {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--charcoal);
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    .campo input { width: 160px; }
+    .campo select { width: 120px; }
+
+    .campo input:focus, .campo select:focus {
+      outline: none;
+      border-color: var(--pink);
+    }
+
+    .btn-recomendar {
+      background: var(--charcoal);
+      border: none;
+      color: var(--white);
+      border-radius: 4px;
+      padding: 10px 22px;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.18s;
+      align-self: flex-end;
+      height: 38px;
+    }
+
+    .btn-recomendar:hover:not(:disabled) { background: var(--ink); }
+    .btn-recomendar:disabled {
+      background: var(--border);
+      color: var(--mist);
+      cursor: not-allowed;
+    }
+
+    /* ── Afinidad ── */
+    .seccion-titulo {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mist);
+      margin-bottom: 12px;
+    }
+
+    .afinidad-lista {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+
+    .afinidad-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .afinidad-nombre {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--charcoal);
+    }
+
+    .afinidad-detalle {
+      font-size: 0.75rem;
+      color: var(--stone);
+      margin-top: 3px;
+    }
+
+    .afinidad-puntaje {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--rose);
+      white-space: nowrap;
+    }
+
+    .afinidad-puntaje span {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      color: var(--mist);
+      font-weight: 400;
+      margin-left: 3px;
+    }
+
+    /* ── Recomendaciones ── */
+    .rec-lista {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rec-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeUp 0.3s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .rec-rank {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: var(--mist);
+      font-weight: 400;
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rec-info { flex: 1; min-width: 0; }
+
+    .rec-nombre {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rec-artista {
+      font-size: 0.77rem;
+      color: var(--stone);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rec-tipo {
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--rose);
+      background: var(--frost);
+      border: 1px solid var(--blush);
+      border-radius: 3px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .rec-tipo.genero {
+      color: var(--stone);
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    /* ── Estados ── */
+    .estado {
+      text-align: center;
+      padding: 56px 0;
+      color: var(--mist);
+      font-size: 0.85rem;
+    }
+
+    .estado .icono {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      display: block;
+      opacity: 0.4;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--rose);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">
+    <svg viewBox="0 0 94 62" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:32px;width:auto;display:block;flex-shrink:0;">
+      <rect x="0"  y="48" width="8" height="12" rx="4" fill="#1e1a1b"/>
+      <rect x="11" y="28" width="8" height="32" rx="4" fill="#1e1a1b"/>
+      <rect x="22" y="36" width="8" height="24" rx="4" fill="#1e1a1b"/>
+      <rect x="33" y="6"  width="8" height="54" rx="4" fill="#e8909f"/>
+      <rect x="44" y="34" width="8" height="26" rx="4" fill="#e8909f"/>
+      <rect x="55" y="0"  width="8" height="60" rx="4" fill="#e8909f"/>
+      <rect x="66" y="14" width="8" height="46" rx="4" fill="#1e1a1b"/>
+      <rect x="77" y="36" width="8" height="24" rx="4" fill="#1e1a1b"/>
+      <rect x="88" y="48" width="8" height="12" rx="4" fill="#1e1a1b"/>
+    </svg>
+    <div class="wordmark">Sonic<span>Mesh</span></div>
+  </a>
+  <nav>
+    <a href="/">Explorar</a>
+    <a href="/recomendaciones" class="active">Recomendaciones</a>
+  </nav>
+</header>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Para <em id="titulo-usuario">vos</em></h1>
+    <p>Canciones recomendadas en base a la afinidad con otros usuarios del grafo.</p>
+  </div>
+
+  <div class="controles">
+    <div class="campo">
+      <label>Usuario</label>
+      <input type="text" id="input-usuario" placeholder="Tu nombre" value="">
+    </div>
+    <div class="campo">
+      <label>Amigas a considerar</label>
+      <select id="select-top-amigas">
+        <option value="1">Top 1</option>
+        <option value="2" selected>Top 2</option>
+        <option value="3">Top 3</option>
+        <option value="5">Top 5</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label>Canciones</label>
+      <select id="select-top-rec">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+      </select>
+    </div>
+    <button class="btn-recomendar" id="btn-rec" onclick="cargarRecomendaciones()">
+      Recomendar
+    </button>
+  </div>
+
+  <div id="resultado">
+    <div class="estado">
+      <span class="icono">♫</span>
+      Ingresá tu usuario y presioná Recomendar
+    </div>
+  </div>
+</div>
+
+<script>
+  function usuario() {
+    return document.getElementById("input-usuario").value.trim();
+  }
+
+  async function cargarRecomendaciones() {
+    const u         = usuario();
+    const topAmigas = document.getElementById("select-top-amigas").value;
+    const topRec    = document.getElementById("select-top-rec").value;
+
+    if (!u) return;
+
+    document.getElementById("titulo-usuario").textContent = u;
+    document.getElementById("btn-rec").disabled = true;
+    document.getElementById("resultado").innerHTML = `
+      <div class="estado"><div class="spinner"></div>Calculando afinidad y recomendaciones…</div>
+    `;
+
+    try {
+      const res  = await fetch(`/api/recomendaciones/${encodeURIComponent(u)}?top_amigas=${topAmigas}&top_rec=${topRec}`);
+      const data = await res.json();
+
+      if (data.error) {
+        document.getElementById("resultado").innerHTML = `
+          <div class="estado"><span class="icono">○</span>${data.error}</div>`;
+        return;
+      }
+
+      renderResultado(data);
+    } catch (e) {
+      document.getElementById("resultado").innerHTML = `
+        <div class="estado"><span class="icono">○</span>Error al conectar con el servidor</div>`;
+    } finally {
+      document.getElementById("btn-rec").disabled = false;
+    }
+  }
+
+  function renderResultado(data) {
+    // ── Afinidad ──
+    let htmlAfinidad = `<div class="seccion-titulo">Usuarios más afines</div><div class="afinidad-lista">`;
+    for (const a of data.afinidad) {
+      htmlAfinidad += `
+        <div class="afinidad-card">
+          <div>
+            <div class="afinidad-nombre">${a.amiga}</div>
+            <div class="afinidad-detalle">
+              ${a.canciones_en_comun} canciones · ${a.albumes_en_comun} álbumes ·
+              ${a.artistas_en_comun} artistas · ${a.generos_en_comun} géneros en común
+            </div>
+          </div>
+          <div class="afinidad-puntaje">${a.puntaje_afinidad}<span>pts</span></div>
+        </div>`;
+    }
+    htmlAfinidad += `</div>`;
+
+    // ── Recomendaciones ──
+    let htmlRec = `<div class="seccion-titulo">Canciones recomendadas</div>`;
+
+    if (!data.recomendaciones.length) {
+      htmlRec += `<div class="estado"><span class="icono">○</span>No se encontraron canciones candidatas</div>`;
+    } else {
+      htmlRec += `<div class="rec-lista">`;
+      for (const [i, r] of data.recomendaciones.entries()) {
+        const delay = `animation-delay: ${i * 45}ms`;
+        htmlRec += `
+          <div class="rec-card" style="${delay}">
+            <div class="rec-rank">${i + 1}</div>
+            <div class="rec-info">
+              <div class="rec-nombre">${r.nombre}</div>
+              <div class="rec-artista">${r.artistas || ""}</div>
+            </div>
+            <div class="rec-tipo ${r.tipo === 'genero' ? 'genero' : ''}">${r.tipo === 'artista' ? 'Artista en común' : 'Género en común'}</div>
+          </div>`;
+      }
+      htmlRec += `</div>`;
+    }
+
+    document.getElementById("resultado").innerHTML =
+      htmlAfinidad + `<hr class="divider">` + htmlRec;
+  }
+
+  // Cargar automáticamente si hay un usuario por defecto
+  window.addEventListener("DOMContentLoaded", () => {
+    if (document.getElementById("input-usuario").value.trim()) {
+      cargarRecomendaciones();
+    }
+  });
+</script>
+</body>
+</html>

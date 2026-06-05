@@ -130,7 +130,6 @@ class MongoAnalytics:
 
 
 def buscar_canciones(busqueda: str = "", genero: str = "") -> list:
-    print(f"\n--- CONSULTA 1: BÚSQUEDA DE CANCIONES (q='{busqueda}', genero='{genero}') ---")
 
     query = {}
 
@@ -144,12 +143,10 @@ def buscar_canciones(busqueda: str = "", genero: str = "") -> list:
         query["generos"] = {"$regex": genero, "$options": "i"}
 
     canciones = list(col.find(query, {"_id": 0}).limit(100))
-    print(f"   → {len(canciones)} canciones encontradas.")
     return canciones
 
 
 def obtener_generos() -> list:
-    print("\n--- CONSULTA 2: GÉNEROS ÚNICOS (distinct) ---")
 
     query = col.distinct("generos")
 
@@ -162,24 +159,18 @@ def obtener_generos() -> list:
                     generos.add(item)
 
     resultado = sorted(generos)
-    print(f"   → {len(resultado)} géneros distintos encontrados.")
     return resultado
 
 
 def buscar_cancion_por_uri(uri: str) -> dict | None:
-    print(f"\n--- CONSULTA 3: BUSCAR POR URI ---")
-    print(f"   uri: {uri}")
-
     query = {"uri": uri}
 
     resultado = col.find_one(query, {"_id": 0})
-    print(f"   → {'Encontrada' if resultado else 'No encontrada'}.")
+
     return resultado
 
 
 def buscar_canciones_por_uris(uris: list) -> list:
-    print(f"\n--- CONSULTA 4: BUSCAR POR LISTA DE URIs ($in) ---")
-    print(f"   URIs solicitados: {len(uris)}")
 
     query = {"uri": {"$in": uris}}
 
@@ -190,7 +181,6 @@ def buscar_canciones_por_uris(uris: list) -> list:
 
 
     resultado = [docs[uri] for uri in uris if uri in docs]
-    print(f"   → {len(resultado)} documentos hidratados.")
     return resultado
 
 if __name__ == "__main__":
