@@ -367,6 +367,27 @@
       font-size: 0.85rem;
     }
 
+
+    nav {
+      display: flex;
+      gap: 6px;
+    }
+
+    nav a {
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--mist);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    nav a:hover { color: var(--charcoal); background: var(--frost); }
+    nav a.active { color: var(--rose); background: var(--frost); }
+
+
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -394,6 +415,10 @@
     <label>Usuario</label>
     <input type="text" id="input-usuario" placeholder="Tu nombre" value="">
   </div>
+  <nav>
+    <a href="/" class="active">Explorar</a>
+    <a href="/recomendaciones" >Recomendaciones</a>
+  </nav>
 </header>
 
 <div class="layout">
