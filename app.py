@@ -167,43 +167,58 @@ def historial():
 
 @app.route("/api/historial/<usuario>/canciones")
 def historial_canciones(usuario):
-    """
-    Q1 — historial completo, ordenado por timestamp desc.
-    Q4 — si se pasa ?year_month=YYYY-MM, filtra por mes.
-    Q5 — si se pasa ?platform=android, filtra por plataforma + mes.
-    """
     year_month = request.args.get("year_month", "").strip()
     platform   = request.args.get("platform", "").strip()
 
     cluster, session = get_cassandra()
     try:
         if platform and year_month:
-            # Q5: tracks_by_user_platform
+            # Q5: filtra por plataforma Y mes
             rows = session.execute(
-                """SELECT ts, track_name, artist_name, ms_played, skipped, spotify_track_uri
+                """SELECT ts, track_name, artist_name, ms_played,
+                          skipped, spotify_track_uri, platform
                    FROM tracks_by_user_platform
-                   WHERE user_id = %s AND platform = %s AND year_month = %s
-                   LIMIT 200""",
+                   WHERE user_id = %s AND platform = %s AND year_month = %s""",
                 (usuario, platform, year_month)
             )
         elif year_month:
-            # Q4: history_by_user_year_month
+            # Q4: filtra solo por mes
             rows = session.execute(
-                """SELECT ts, track_name, artist_name, platform, ms_played, skipped, spotify_track_uri
+                """SELECT ts, track_name, artist_name, platform,
+                          ms_played, skipped, spotify_track_uri
                    FROM history_by_user_year_month
                    WHERE user_id = %s AND year_month = %s""",
                 (usuario, year_month)
             )
+        elif platform:
+            # Sin mes: traemos todos los períodos disponibles y filtramos en memoria
+            periodos = session.execute(
+                """SELECT DISTINCT year_month
+                   FROM history_by_user_year_month
+                   WHERE user_id = %s""",
+                (usuario,)
+            )
+            todas = []
+            for p in periodos:
+                r = session.execute(
+                    """SELECT ts, track_name, artist_name, ms_played,
+                              skipped, spotify_track_uri, platform
+                       FROM tracks_by_user_platform
+                       WHERE user_id = %s AND platform = %s AND year_month = %s""",
+                    (usuario, platform, p.year_month)
+                )
+                todas.extend(r)
+            rows = sorted(todas, key=lambda x: x.ts, reverse=True)[:200]
         else:
-            # Q1: tracks_by_user
+            # Q1: historial completo
             rows = session.execute(
                 """SELECT ts, track_name, artist_name, album_name,
-    platform, ms_played, skipped, source,
-    spotify_track_uri
-FROM tracks_by_user
-WHERE user_id = %s
-LIMIT 200""",
-(usuario,)
+                          platform, ms_played, skipped, source,
+                          spotify_track_uri
+                   FROM tracks_by_user
+                   WHERE user_id = %s
+                   LIMIT 200""",
+                (usuario,)
             )
 
         resultado = []
@@ -305,14 +320,22 @@ def historial_salteadas(usuario):
     finally:
         cluster.shutdown()
 
+@app.route("/api/historial/usuarios")
+def historial_usuarios():
+    cluster, session = get_cassandra()
+    try:
+        rows = session.execute("SELECT DISTINCT user_id FROM tracks_by_user")
+        usuarios = sorted([r.user_id for r in rows if r.user_id])
+        return jsonify(usuarios)
+    finally:
+        cluster.shutdown()
 
 @app.route("/api/historial/<usuario>/periodos")
 def historial_periodos(usuario):
-    """Devuelve los year_month disponibles para el selector del front."""
     cluster, session = get_cassandra()
     try:
         rows = session.execute(
-            """SELECT DISTINCT year_month
+            """SELECT year_month
                FROM history_by_user_year_month
                WHERE user_id = %s""",
             (usuario,)
@@ -321,6 +344,23 @@ def historial_periodos(usuario):
         return jsonify(periodos)
     finally:
         cluster.shutdown()
+
+
+@app.route("/api/historial/<usuario>/plataformas")
+def historial_plataformas(usuario):
+    cluster, session = get_cassandra()
+    try:
+        rows = session.execute(
+            """SELECT platform
+               FROM tracks_by_user
+               WHERE user_id = %s""",
+            (usuario,)
+        )
+        plataformas = sorted({r.platform for r in rows if r.platform})
+        return jsonify(plataformas)
+    finally:
+        cluster.shutdown()
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

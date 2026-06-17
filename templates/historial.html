@@ -18,8 +18,6 @@
       --cream:    #faf7f8;
       --white:    #ffffff;
       --border:   #ecdde0;
-      --green:    #6bbf8e;
-      --red:      #d4718a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +29,6 @@
       min-height: 100vh;
     }
 
-    /* ── Header ── */
     header {
       background: var(--white);
       padding: 0 36px;
@@ -69,14 +66,12 @@
     nav a:hover { color: var(--charcoal); background: var(--frost); }
     nav a.active { color: var(--rose); background: var(--frost); }
 
-    /* ── Layout principal ── */
     .layout {
       display: grid;
       grid-template-columns: 220px 1fr;
       height: calc(100vh - 64px);
     }
 
-    /* ── Sidebar izquierda: controles ── */
     .sidebar {
       background: var(--white);
       border-right: 1px solid var(--border);
@@ -108,8 +103,8 @@
       cursor: pointer;
     }
     .sidebar select:focus { outline: none; border-color: var(--pink); }
+    .sidebar select:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* Stats card */
     .stat-card {
       background: var(--frost);
       border: 1px solid var(--border);
@@ -137,17 +132,14 @@
       margin-top: 3px;
     }
 
-    /* ── Contenido principal ── */
     .main {
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* Tabs */
     .tabs {
       display: flex;
-      gap: 0;
       border-bottom: 1px solid var(--border);
       background: var(--white);
       padding: 0 28px;
@@ -169,14 +161,12 @@
     .tab:hover { color: var(--charcoal); }
     .tab.active { color: var(--rose); border-bottom-color: var(--rose); }
 
-    /* Contenido scrolleable */
     .content {
       flex: 1;
       overflow-y: auto;
       padding: 28px 32px;
     }
 
-    /* ── Tabla ── */
     .table-wrap {
       background: var(--white);
       border: 1px solid var(--border);
@@ -185,7 +175,6 @@
     }
 
     table { width: 100%; border-collapse: collapse; }
-
     thead { background: var(--frost); }
     th {
       padding: 12px 16px;
@@ -236,13 +225,7 @@
       border-radius: 50%;
       background: var(--mist);
     }
-    .platform-dot.android::before { background: #6bbf8e; }
-    .platform-dot.ios::before     { background: #7bafd4; }
-    .platform-dot.desktop::before { background: #b39fcc; }
-    .platform-dot.web::before     { background: #d4b06a; }
-    .platform-dot.youtube_music::before { background: var(--rose); }
 
-    /* ── Ranking list ── */
     .rank-list { list-style: none; }
     .rank-item {
       display: flex;
@@ -276,11 +259,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .rank-sub {
-      font-size: 0.74rem;
-      color: var(--mist);
-      margin-top: 2px;
-    }
+    .rank-sub { font-size: 0.74rem; color: var(--mist); margin-top: 2px; }
 
     .rank-bar-wrap { width: 100px; flex-shrink: 0; }
     .rank-bar-bg {
@@ -294,14 +273,8 @@
       border-radius: 3px;
       background: linear-gradient(90deg, var(--pink), var(--rose));
     }
-    .rank-val {
-      font-size: 0.72rem;
-      color: var(--mist);
-      text-align: right;
-      margin-top: 3px;
-    }
+    .rank-val { font-size: 0.72rem; color: var(--mist); text-align: right; margin-top: 3px; }
 
-    /* ── Loading / empty ── */
     .loading, .empty-state {
       text-align: center;
       padding: 48px 0;
@@ -351,35 +324,25 @@
 
 <div class="layout">
 
-  <!-- ── Sidebar izquierda ── -->
   <aside class="sidebar">
     <div class="sidebar-section">
       <h3>Usuario</h3>
       <select id="sel-usuario" onchange="onUsuarioCambio()">
         <option value="">Seleccioná…</option>
-        <option value="Antonella">Antonella</option>
-        <option value="Guillermina">Guillermina</option>
-        <option value="JulietaS">JulietaS</option>
-        <option value="JulietaB">JulietaB</option>
       </select>
     </div>
 
     <div class="sidebar-section">
       <h3>Período</h3>
-      <select id="sel-periodo" onchange="cargarVista()">
+      <select id="sel-periodo" onchange="cargarVista()" disabled>
         <option value="">Todo el tiempo</option>
       </select>
     </div>
 
     <div class="sidebar-section">
       <h3>Plataforma</h3>
-      <select id="sel-plataforma" onchange="cargarVista()">
+      <select id="sel-plataforma" onchange="cargarVista()" disabled>
         <option value="">Todas</option>
-        <option value="android">Android</option>
-        <option value="ios">iOS</option>
-        <option value="desktop">Desktop</option>
-        <option value="web">Web</option>
-        <option value="youtube_music">YouTube Music</option>
       </select>
     </div>
 
@@ -389,21 +352,20 @@
     </div>
   </aside>
 
-  <!-- ── Contenido principal ── -->
   <div class="main">
     <div class="tabs">
       <button class="tab active" onclick="cambiarTab('canciones', this)">Canciones</button>
-      <button class="tab" onclick="cambiarTab('artistas', this)">Top artistas</button>
-      <button class="tab" onclick="cambiarTab('artista-detalle', this)">Por artista</button>
-      <button class="tab" onclick="cambiarTab('skips', this)">Más salteadas</button>
+      <button class="tab" onclick="cambiarTab('artistas', this)">Top artistas (Histórico)</button>
+      <button class="tab" onclick="cambiarTab('artista-detalle', this)">Por artista (Histórico)</button>
+      <button class="tab" onclick="cambiarTab('skips', this)">Más salteadas (Histórico)</button>
     </div>
 
     <div class="content">
 
-      <!-- Panel canciones (Q1 / Q4 / Q5) -->
+      <!-- Panel canciones Q1/Q4/Q5 -->
       <div id="panel-canciones">
         <div class="table-wrap">
-          <div class="loading" id="loading-canciones"><div class="spinner"></div><br>Seleccioná un usuario para comenzar</div>
+          <div class="loading" id="loading-canciones">Seleccioná un usuario para comenzar</div>
           <table id="tabla-canciones" style="display:none">
             <thead>
               <tr>
@@ -422,7 +384,7 @@
         </div>
       </div>
 
-      <!-- Panel top artistas (Q2) -->
+      <!-- Panel top artistas Q2 -->
       <div id="panel-artistas" style="display:none">
         <div class="table-wrap">
           <div class="loading" id="loading-artistas"><div class="spinner"></div><br>Cargando…</div>
@@ -431,7 +393,7 @@
         </div>
       </div>
 
-      <!-- Panel por artista (Q3) -->
+      <!-- Panel por artista Q3 -->
       <div id="panel-artista-detalle" style="display:none">
         <div style="margin-bottom:16px">
           <select id="sel-artista" onchange="cargarCancionesArtista()"
@@ -446,7 +408,7 @@
         </div>
       </div>
 
-      <!-- Panel salteadas (Q6) -->
+      <!-- Panel salteadas Q6 -->
       <div id="panel-skips" style="display:none">
         <div class="table-wrap">
           <div class="loading" id="loading-skips"><div class="spinner"></div><br>Cargando…</div>
@@ -477,26 +439,34 @@
   }
 
   async function onUsuarioCambio() {
-    await cargarPeriodos();
+    document.getElementById('sel-periodo').value    = '';
+    document.getElementById('sel-plataforma').value = '';
+    document.getElementById('sel-periodo').disabled    = true;
+    document.getElementById('sel-plataforma').disabled = true;
+    if (!usuario()) return;
+    await Promise.all([cargarPeriodos(), cargarPlataformas()]);
+    document.getElementById('sel-periodo').disabled    = false;
+    document.getElementById('sel-plataforma').disabled = false;
     cargarVista();
   }
 
   async function cargarVista() {
     if (!usuario()) return;
-    if (tabActual === 'canciones')        await cargarCanciones();
-    else if (tabActual === 'artistas')    await cargarArtistas();
+    if      (tabActual === 'canciones')       await cargarCanciones();
+    else if (tabActual === 'artistas')        await cargarArtistas();
     else if (tabActual === 'artista-detalle') await cargarSelectArtistas();
-    else if (tabActual === 'skips')       await cargarSkips();
+    else if (tabActual === 'skips')           await cargarSkips();
   }
 
   /* ── Q1 / Q4 / Q5 ── */
   async function cargarCanciones() {
     mostrarLoading('canciones');
-    const p = periodo(), pl = plataforma();
-    let url = `/api/historial/${usuario()}/canciones`;
+    const p  = periodo();
+    const pl = plataforma();
+    let url  = `/api/historial/${usuario()}/canciones`;
     const params = [];
-    if (p)  params.push(`year_month=${p}`);
-    if (pl) params.push(`platform=${pl}`);
+    if (p)  params.push(`year_month=${encodeURIComponent(p)}`);
+    if (pl) params.push(`platform=${encodeURIComponent(pl)}`);
     if (params.length) url += '?' + params.join('&');
 
     const data = await fetch(url).then(r => r.json()).catch(() => []);
@@ -509,36 +479,52 @@
 
     if (!rows.length) { mostrarEmpty('canciones'); ocultarStats(); return; }
 
-    const total    = rows.length;
-    const minutos  = Math.round(rows.reduce((s, r) => s + (r.ms_played || 0), 0) / 60000);
+    const total     = rows.length;
+    const minutos   = Math.round(rows.reduce((s, r) => s + (r.ms_played || 0), 0) / 60000);
     const salteadas = rows.filter(r => r.skipped).length;
 
     document.getElementById('stats-wrap').style.display = '';
     document.getElementById('stats-cards').innerHTML = `
-      <div class="stat-card"><div class="stat-label">Reproducciones</div><div class="stat-value">${total}</div></div>
-      <div class="stat-card"><div class="stat-label">Minutos</div><div class="stat-value">${minutos.toLocaleString()}</div></div>
-      <div class="stat-card"><div class="stat-label">Salteadas</div><div class="stat-value">${salteadas}</div><div class="stat-sub">${total ? Math.round(salteadas/total*100) : 0}% del total</div></div>
+      <div class="stat-card">
+        <div class="stat-label">Reproducciones</div>
+        <div class="stat-value">${total}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Minutos</div>
+        <div class="stat-value">${minutos.toLocaleString()}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Salteadas</div>
+        <div class="stat-value">${salteadas}</div>
+        <div class="stat-sub">${total ? Math.round(salteadas/total*100) : 0}% del total</div>
+      </div>
     `;
 
     rows.forEach((r, i) => {
-      const fecha = r.ts ? new Date(r.ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}) : '—';
-      const dur   = r.ms_played ? `${Math.floor(r.ms_played/60000)}:${String(Math.floor((r.ms_played%60000)/1000)).padStart(2,'0')}` : '—';
-      const pl    = (r.platform || 'unknown').toLowerCase().replace(/ /g,'_');
-      const skip  = r.skipped
+      const fecha = r.ts
+        ? new Date(r.ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'})
+        : '—';
+      const dur = r.ms_played
+        ? `${Math.floor(r.ms_played/60000)}:${String(Math.floor((r.ms_played%60000)/1000)).padStart(2,'0')}`
+        : '—';
+      const pl   = (r.platform || 'unknown').toLowerCase().replace(/ /g,'_');
+      const skip = r.skipped
         ? `<span class="badge badge-yes">Sí</span>`
         : `<span class="badge badge-no">No</span>`;
+
       tbody.insertAdjacentHTML('beforeend', `
         <tr>
           <td style="color:var(--mist)">${i+1}</td>
-          <td><div class="truncate" title="${r.track_name}">${r.track_name}</div></td>
-          <td><div class="truncate" style="color:var(--stone)" title="${r.artist_name}">${r.artist_name}</div></td>
+          <td><div class="truncate" title="${r.track_name || ''}">${r.track_name || '—'}</div></td>
+          <td><div class="truncate" style="color:var(--stone)" title="${r.artist_name || ''}">${r.artist_name || '—'}</div></td>
           <td style="color:var(--mist);white-space:nowrap;font-size:0.78rem">${fecha}</td>
-          <td><span class="platform-dot ${pl}">${pl}</span></td>
+          <td><span class="platform-dot">${pl}</span></td>
           <td style="color:var(--mist)">${dur}</td>
           <td>${skip}</td>
         </tr>
       `);
     });
+
     document.getElementById('tabla-canciones').style.display = '';
     document.getElementById('loading-canciones').style.display = 'none';
     document.getElementById('empty-canciones').style.display = 'none';
@@ -547,7 +533,8 @@
   /* ── Q2: top artistas ── */
   async function cargarArtistas() {
     mostrarLoading('artistas');
-    const data = await fetch(`/api/historial/${usuario()}/top-artistas`).then(r => r.json()).catch(() => []);
+    const data = await fetch(`/api/historial/${usuario()}/top-artistas`)
+      .then(r => r.json()).catch(() => []);
     const ul = document.getElementById('list-artistas');
     ul.innerHTML = '';
 
@@ -578,7 +565,8 @@
 
   /* ── Q3: canciones por artista ── */
   async function cargarSelectArtistas() {
-    const data = await fetch(`/api/historial/${usuario()}/top-artistas`).then(r => r.json()).catch(() => []);
+    const data = await fetch(`/api/historial/${usuario()}/top-artistas`)
+      .then(r => r.json()).catch(() => []);
     const sel  = document.getElementById('sel-artista');
     const prev = sel.value;
     sel.innerHTML = '<option value="">Seleccioná un artista…</option>';
@@ -600,8 +588,9 @@
     document.getElementById('empty-artista-detalle').style.display = 'none';
     document.getElementById('list-artista-detalle').innerHTML = '';
 
-    const data = await fetch(`/api/historial/${usuario()}/artista/${encodeURIComponent(artista)}`).then(r => r.json()).catch(() => []);
-    const ul   = document.getElementById('list-artista-detalle');
+    const data = await fetch(`/api/historial/${usuario()}/artista/${encodeURIComponent(artista)}`)
+      .then(r => r.json()).catch(() => []);
+    const ul = document.getElementById('list-artista-detalle');
 
     if (!data.length) { mostrarEmpty('artista-detalle'); return; }
 
@@ -631,15 +620,18 @@
   /* ── Q6: salteadas ── */
   async function cargarSkips() {
     mostrarLoading('skips');
-    const data = await fetch(`/api/historial/${usuario()}/salteadas`).then(r => r.json()).catch(() => []);
-    const ul   = document.getElementById('list-skips');
+    const data = await fetch(`/api/historial/${usuario()}/salteadas`)
+      .then(r => r.json()).catch(() => []);
+    const ul = document.getElementById('list-skips');
     ul.innerHTML = '';
 
     if (!data.length) { mostrarEmpty('skips'); return; }
 
     const max = data[0].skip_count || 1;
     data.forEach((t, i) => {
-      const avg = t.avg_ms_before_skip ? `${(t.avg_ms_before_skip/1000).toFixed(0)}s antes de saltear` : '';
+      const avg = t.avg_ms_before_skip
+        ? `${(t.avg_ms_before_skip/1000).toFixed(0)}s antes de saltear`
+        : '';
       const pct = Math.round(t.skip_count / max * 100);
       ul.insertAdjacentHTML('beforeend', `
         <li class="rank-item">
@@ -659,11 +651,33 @@
     document.getElementById('empty-skips').style.display = 'none';
   }
 
-  /* ── Períodos ── */
+  /* ── Carga dinámica de filtros desde Cassandra ── */
+  async function cargarUsuarios() {
+    const data = await fetch('/api/historial/usuarios').then(r => r.json()).catch(() => []);
+    const sel  = document.getElementById('sel-usuario');
+    sel.innerHTML = '<option value="">Seleccioná…</option>';
+    data.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u; opt.textContent = u;
+      sel.appendChild(opt);
+    });
+  }
+
   async function cargarPeriodos() {
     const data = await fetch(`/api/historial/${usuario()}/periodos`).then(r => r.json()).catch(() => []);
     const sel  = document.getElementById('sel-periodo');
     sel.innerHTML = '<option value="">Todo el tiempo</option>';
+    data.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function cargarPlataformas() {
+    const data = await fetch(`/api/historial/${usuario()}/plataformas`).then(r => r.json()).catch(() => []);
+    const sel  = document.getElementById('sel-plataforma');
+    sel.innerHTML = '<option value="">Todas</option>';
     data.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p; opt.textContent = p;
@@ -695,6 +709,8 @@
   function ocultarStats() {
     document.getElementById('stats-wrap').style.display = 'none';
   }
+
+  cargarUsuarios();
 </script>
 </body>
 </html>
