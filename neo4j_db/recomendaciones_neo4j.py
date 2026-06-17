@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from neo4j import GraphDatabase
 from voyager import Index, Space
+from sklearn.preprocessing import MinMaxScaler
 
 URI              = "bolt://localhost:7687"
 USER             = "neo4j"
@@ -100,10 +101,6 @@ RETURN t.bailabilidad      AS bailabilidad,
 
 
 def recomendar(usuario_objetivo=USUARIO_OBJETIVO, top_amigas_n=TOP_AMIGAS, top_recomendadas_n=TOP_RECOMENDADAS):
-    """
-    Función llamada desde app.py. Ejecuta todas las queries y devuelve
-    un dict con 'afinidad' y 'recomendaciones' listo para jsonify().
-    """
     print(f"Calculando afinidad social para '{usuario_objetivo}'...")
     driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
     with driver.session() as session:
@@ -167,37 +164,48 @@ def recomendar(usuario_objetivo=USUARIO_OBJETIVO, top_amigas_n=TOP_AMIGAS, top_r
     vector_usuario = df_perfil[FEATURES].mean().to_numpy().astype('float32')
 
     df_pool = pd.concat([df_artistas, df_generos], ignore_index=True)
-    pool_vectors = df_pool[FEATURES].to_numpy().astype('float32')
+
+    scaler = MinMaxScaler()
+    pool_vectors_norm = scaler.fit_transform(df_pool[FEATURES].to_numpy().astype('float32'))
+    vector_usuario_norm = scaler.transform(vector_usuario.reshape(1, -1))[0].astype('float32')
 
     index = Index(Space.Euclidean, num_dimensions=len(FEATURES))
-    index.add_items(pool_vectors)
+    index.add_items(pool_vectors_norm)
 
     k = min(len(df_pool), top_recomendadas_n + len(df_artistas))
-    neighbors, distances = index.query(vector_usuario, k=k)
+    neighbors, distances = index.query(vector_usuario_norm, k=k)
 
-    uris_resultado  = []
+    uris_resultado = []
     resultado_filas = []
 
-    for idx, dist in zip(neighbors, distances):
-        uri = df_pool.loc[idx, 'uri']
-        if uri in uris_artistas and uri not in uris_resultado:
+    #artistas en común entran siempre
+    for idx, row in df_artistas.iterrows():
+        uri = row['uri']
+        if uri not in uris_resultado:
             uris_resultado.append(uri)
-            resultado_filas.append({"nombre": df_pool.loc[idx, 'nombre'], "uri": uri, "tipo": "artista"})
+            resultado_filas.append({
+                "nombre": row['nombre'],
+                "uri": uri,
+                "tipo": "artista"
+            })
 
-    elementos_faltantes = top_recomendadas_n - len(resultado_filas)
-
-    for idx, dist in list(zip(neighbors, distances))[:elementos_faltantes + len(df_artistas)]:
-        uri = df_pool.loc[idx, 'uri']
-        if uri not in uris_artistas and uri not in uris_resultado:
-            uris_resultado.append(uri)
-            resultado_filas.append({"nombre": df_pool.loc[idx, 'nombre'], "uri": uri, "tipo": "genero"})
-            if len(resultado_filas) >= top_recomendadas_n:
-                break
+    if len(resultado_filas) < top_recomendadas_n and not df_generos.empty:
+        candidatas_genero = [
+            {"nombre": df_pool.loc[idx, 'nombre'], "uri": df_pool.loc[idx, 'uri'], "tipo": "genero"}
+            for idx, dist in zip(neighbors, distances)
+            if df_pool.loc[idx, 'uri'] not in uris_artistas
+               and df_pool.loc[idx, 'uri'] not in uris_resultado
+        ]
+        faltantes = top_recomendadas_n - len(resultado_filas)
+        for cancion in candidatas_genero[:faltantes]:
+            uris_resultado.append(cancion['uri'])
+            resultado_filas.append(cancion)
 
     print(f"\nRECOMENDACIONES PARA {usuario_objetivo.upper()}")
     print(f"De las playlists de: {', '.join(top_amigas)}\n")
     for rank, r in enumerate(resultado_filas, 1):
         print(f"{rank:>2}. '{r['nombre']}'")
+
 
     return {
         "afinidad":        df_afinidad.head(top_amigas_n).to_dict(orient="records"),
