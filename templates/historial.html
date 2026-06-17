@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SonicMesh — Historial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink:     #e8a0b0;
+      --blush:    #f5d5dc;
+      --frost:    #fdf0f2;
+      --rose:     #d4718a;
+      --charcoal: #1e1a1b;
+      --ink:      #2e2829;
+      --stone:    #7a6f71;
+      --mist:     #b3a8aa;
+      --cream:    #faf7f8;
+      --white:    #ffffff;
+      --border:   #ecdde0;
+      --green:    #6bbf8e;
+      --red:      #d4718a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--white);
+      padding: 0 36px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo { display: flex; align-items: center; gap: 12px; }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      margin-top: 6px;
+    }
+    .wordmark span { color: var(--rose); }
+
+    nav { display: flex; gap: 6px; }
+    nav a {
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--mist);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    nav a:hover { color: var(--charcoal); background: var(--frost); }
+    nav a.active { color: var(--rose); background: var(--frost); }
+
+    /* ── Layout principal ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      height: calc(100vh - 64px);
+    }
+
+    /* ── Sidebar izquierda: controles ── */
+    .sidebar {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      gap: 24px;
+      overflow-y: auto;
+    }
+
+    .sidebar-section h3 {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mist);
+      margin-bottom: 10px;
+    }
+
+    .sidebar select {
+      width: 100%;
+      background: var(--frost);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--charcoal);
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .sidebar select:focus { outline: none; border-color: var(--pink); }
+
+    /* Stats card */
+    .stat-card {
+      background: var(--frost);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mist);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      line-height: 1;
+    }
+    .stat-sub {
+      font-size: 0.72rem;
+      color: var(--mist);
+      margin-top: 3px;
+    }
+
+    /* ── Contenido principal ── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+      padding: 0 28px;
+    }
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 16px 18px;
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--mist);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--charcoal); }
+    .tab.active { color: var(--rose); border-bottom-color: var(--rose); }
+
+    /* Contenido scrolleable */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+    }
+
+    /* ── Tabla ── */
+    .table-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { background: var(--frost); }
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--mist);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 12px 16px;
+      font-size: 0.84rem;
+      border-top: 1px solid var(--border);
+      color: var(--charcoal);
+    }
+    tr:hover td { background: var(--frost); }
+
+    .truncate {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    .badge-yes { background: var(--blush); color: var(--rose); }
+    .badge-no  { background: #edf7f1; color: #5a9e74; }
+
+    .platform-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      color: var(--stone);
+    }
+    .platform-dot::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--mist);
+    }
+    .platform-dot.android::before { background: #6bbf8e; }
+    .platform-dot.ios::before     { background: #7bafd4; }
+    .platform-dot.desktop::before { background: #b39fcc; }
+    .platform-dot.web::before     { background: #d4b06a; }
+    .platform-dot.youtube_music::before { background: var(--rose); }
+
+    /* ── Ranking list ── */
+    .rank-list { list-style: none; }
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .rank-item:first-child { border-top: none; }
+    .rank-item:hover { background: var(--frost); }
+
+    .rank-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--mist);
+      width: 24px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .rank-num.gold   { color: #c9a84c; }
+    .rank-num.silver { color: #8e9aaa; }
+    .rank-num.bronze { color: #a07850; }
+
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name {
+      font-size: 0.88rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rank-sub {
+      font-size: 0.74rem;
+      color: var(--mist);
+      margin-top: 2px;
+    }
+
+    .rank-bar-wrap { width: 100px; flex-shrink: 0; }
+    .rank-bar-bg {
+      background: var(--border);
+      border-radius: 3px;
+      height: 4px;
+      overflow: hidden;
+    }
+    .rank-bar {
+      height: 4px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--pink), var(--rose));
+    }
+    .rank-val {
+      font-size: 0.72rem;
+      color: var(--mist);
+      text-align: right;
+      margin-top: 3px;
+    }
+
+    /* ── Loading / empty ── */
+    .loading, .empty-state {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--mist);
+      font-size: 0.84rem;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--rose);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blush); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 94 62" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:32px;width:auto;display:block;flex-shrink:0;">
+      <rect x="0"  y="48" width="8" height="12" rx="4" fill="#1e1a1b"/>
+      <rect x="11" y="28" width="8" height="32" rx="4" fill="#1e1a1b"/>
+      <rect x="22" y="36" width="8" height="24" rx="4" fill="#1e1a1b"/>
+      <rect x="33" y="6"  width="8" height="54" rx="4" fill="#e8909f"/>
+      <rect x="44" y="34" width="8" height="26" rx="4" fill="#e8909f"/>
+      <rect x="55" y="0"  width="8" height="60" rx="4" fill="#e8909f"/>
+      <rect x="66" y="14" width="8" height="46" rx="4" fill="#1e1a1b"/>
+      <rect x="77" y="36" width="8" height="24" rx="4" fill="#1e1a1b"/>
+      <rect x="88" y="48" width="8" height="12" rx="4" fill="#1e1a1b"/>
+    </svg>
+    <div class="wordmark">Sonic<span>Mesh</span></div>
+  </div>
+  <nav>
+    <a href="/">Explorar</a>
+    <a href="/recomendaciones">Recomendaciones</a>
+    <a href="/historial" class="active">Historial</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar izquierda ── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>Usuario</h3>
+      <select id="sel-usuario" onchange="onUsuarioCambio()">
+        <option value="">Seleccioná…</option>
+        <option value="Antonella">Antonella</option>
+        <option value="Guillermina">Guillermina</option>
+        <option value="JulietaS">JulietaS</option>
+        <option value="JulietaB">JulietaB</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Período</h3>
+      <select id="sel-periodo" onchange="cargarVista()">
+        <option value="">Todo el tiempo</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Plataforma</h3>
+      <select id="sel-plataforma" onchange="cargarVista()">
+        <option value="">Todas</option>
+        <option value="android">Android</option>
+        <option value="ios">iOS</option>
+        <option value="desktop">Desktop</option>
+        <option value="web">Web</option>
+        <option value="youtube_music">YouTube Music</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section" id="stats-wrap" style="display:none">
+      <h3>Resumen</h3>
+      <div id="stats-cards"></div>
+    </div>
+  </aside>
+
+  <!-- ── Contenido principal ── -->
+  <div class="main">
+    <div class="tabs">
+      <button class="tab active" onclick="cambiarTab('canciones', this)">Canciones</button>
+      <button class="tab" onclick="cambiarTab('artistas', this)">Top artistas</button>
+      <button class="tab" onclick="cambiarTab('artista-detalle', this)">Por artista</button>
+      <button class="tab" onclick="cambiarTab('skips', this)">Más salteadas</button>
+    </div>
+
+    <div class="content">
+
+      <!-- Panel canciones (Q1 / Q4 / Q5) -->
+      <div id="panel-canciones">
+        <div class="table-wrap">
+          <div class="loading" id="loading-canciones"><div class="spinner"></div><br>Seleccioná un usuario para comenzar</div>
+          <table id="tabla-canciones" style="display:none">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Canción</th>
+                <th>Artista</th>
+                <th>Fecha</th>
+                <th>Plataforma</th>
+                <th>Duración</th>
+                <th>Salteada</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-canciones"></tbody>
+          </table>
+          <div class="empty-state" id="empty-canciones" style="display:none">Sin reproducciones para este período.</div>
+        </div>
+      </div>
+
+      <!-- Panel top artistas (Q2) -->
+      <div id="panel-artistas" style="display:none">
+        <div class="table-wrap">
+          <div class="loading" id="loading-artistas"><div class="spinner"></div><br>Cargando…</div>
+          <ul class="rank-list" id="list-artistas"></ul>
+          <div class="empty-state" id="empty-artistas" style="display:none">Sin datos de artistas.</div>
+        </div>
+      </div>
+
+      <!-- Panel por artista (Q3) -->
+      <div id="panel-artista-detalle" style="display:none">
+        <div style="margin-bottom:16px">
+          <select id="sel-artista" onchange="cargarCancionesArtista()"
+            style="background:var(--white);border:1px solid var(--border);border-radius:4px;color:var(--charcoal);padding:9px 14px;font-size:0.85rem;font-family:'DM Sans',sans-serif;width:280px">
+            <option value="">Seleccioná un artista…</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <div class="loading" id="loading-artista-detalle" style="display:none"><div class="spinner"></div><br>Cargando…</div>
+          <ul class="rank-list" id="list-artista-detalle"></ul>
+          <div class="empty-state" id="empty-artista-detalle">Seleccioná un artista para ver sus canciones.</div>
+        </div>
+      </div>
+
+      <!-- Panel salteadas (Q6) -->
+      <div id="panel-skips" style="display:none">
+        <div class="table-wrap">
+          <div class="loading" id="loading-skips"><div class="spinner"></div><br>Cargando…</div>
+          <ul class="rank-list" id="list-skips"></ul>
+          <div class="empty-state" id="empty-skips" style="display:none">Sin canciones salteadas.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  let tabActual = 'canciones';
+
+  function usuario()    { return document.getElementById('sel-usuario').value; }
+  function periodo()    { return document.getElementById('sel-periodo').value; }
+  function plataforma() { return document.getElementById('sel-plataforma').value; }
+
+  function cambiarTab(tab, btn) {
+    tabActual = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    ['canciones','artistas','artista-detalle','skips'].forEach(p =>
+      document.getElementById(`panel-${p}`).style.display = p === tab ? '' : 'none'
+    );
+    if (usuario()) cargarVista();
+  }
+
+  async function onUsuarioCambio() {
+    await cargarPeriodos();
+    cargarVista();
+  }
+
+  async function cargarVista() {
+    if (!usuario()) return;
+    if (tabActual === 'canciones')        await cargarCanciones();
+    else if (tabActual === 'artistas')    await cargarArtistas();
+    else if (tabActual === 'artista-detalle') await cargarSelectArtistas();
+    else if (tabActual === 'skips')       await cargarSkips();
+  }
+
+  /* ── Q1 / Q4 / Q5 ── */
+  async function cargarCanciones() {
+    mostrarLoading('canciones');
+    const p = periodo(), pl = plataforma();
+    let url = `/api/historial/${usuario()}/canciones`;
+    const params = [];
+    if (p)  params.push(`year_month=${p}`);
+    if (pl) params.push(`platform=${pl}`);
+    if (params.length) url += '?' + params.join('&');
+
+    const data = await fetch(url).then(r => r.json()).catch(() => []);
+    renderCanciones(data);
+  }
+
+  function renderCanciones(rows) {
+    const tbody = document.getElementById('tbody-canciones');
+    tbody.innerHTML = '';
+
+    if (!rows.length) { mostrarEmpty('canciones'); ocultarStats(); return; }
+
+    const total    = rows.length;
+    const minutos  = Math.round(rows.reduce((s, r) => s + (r.ms_played || 0), 0) / 60000);
+    const salteadas = rows.filter(r => r.skipped).length;
+
+    document.getElementById('stats-wrap').style.display = '';
+    document.getElementById('stats-cards').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Reproducciones</div><div class="stat-value">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Minutos</div><div class="stat-value">${minutos.toLocaleString()}</div></div>
+      <div class="stat-card"><div class="stat-label">Salteadas</div><div class="stat-value">${salteadas}</div><div class="stat-sub">${total ? Math.round(salteadas/total*100) : 0}% del total</div></div>
+    `;
+
+    rows.forEach((r, i) => {
+      const fecha = r.ts ? new Date(r.ts).toLocaleString('es-AR', {dateStyle:'short', timeStyle:'short'}) : '—';
+      const dur   = r.ms_played ? `${Math.floor(r.ms_played/60000)}:${String(Math.floor((r.ms_played%60000)/1000)).padStart(2,'0')}` : '—';
+      const pl    = (r.platform || 'unknown').toLowerCase().replace(/ /g,'_');
+      const skip  = r.skipped
+        ? `<span class="badge badge-yes">Sí</span>`
+        : `<span class="badge badge-no">No</span>`;
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td style="color:var(--mist)">${i+1}</td>
+          <td><div class="truncate" title="${r.track_name}">${r.track_name}</div></td>
+          <td><div class="truncate" style="color:var(--stone)" title="${r.artist_name}">${r.artist_name}</div></td>
+          <td style="color:var(--mist);white-space:nowrap;font-size:0.78rem">${fecha}</td>
+          <td><span class="platform-dot ${pl}">${pl}</span></td>
+          <td style="color:var(--mist)">${dur}</td>
+          <td>${skip}</td>
+        </tr>
+      `);
+    });
+    document.getElementById('tabla-canciones').style.display = '';
+    document.getElementById('loading-canciones').style.display = 'none';
+    document.getElementById('empty-canciones').style.display = 'none';
+  }
+
+  /* ── Q2: top artistas ── */
+  async function cargarArtistas() {
+    mostrarLoading('artistas');
+    const data = await fetch(`/api/historial/${usuario()}/top-artistas`).then(r => r.json()).catch(() => []);
+    const ul = document.getElementById('list-artistas');
+    ul.innerHTML = '';
+
+    if (!data.length) { mostrarEmpty('artistas'); return; }
+
+    const max = data[0].total_ms_played || 1;
+    data.forEach((a, i) => {
+      const horas = (a.total_ms_played / 3600000).toFixed(1);
+      const pct   = Math.round(a.total_ms_played / max * 100);
+      const cls   = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      ul.insertAdjacentHTML('beforeend', `
+        <li class="rank-item">
+          <span class="rank-num ${cls}">${i+1}</span>
+          <div class="rank-info">
+            <div class="rank-name">${a.artist_name}</div>
+            <div class="rank-sub">${a.play_count} reproducciones</div>
+          </div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-bg"><div class="rank-bar" style="width:${pct}%"></div></div>
+            <div class="rank-val">${horas}h</div>
+          </div>
+        </li>
+      `);
+    });
+    document.getElementById('loading-artistas').style.display = 'none';
+    document.getElementById('empty-artistas').style.display = 'none';
+  }
+
+  /* ── Q3: canciones por artista ── */
+  async function cargarSelectArtistas() {
+    const data = await fetch(`/api/historial/${usuario()}/top-artistas`).then(r => r.json()).catch(() => []);
+    const sel  = document.getElementById('sel-artista');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Seleccioná un artista…</option>';
+    data.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.artist_name;
+      opt.textContent = a.artist_name;
+      sel.appendChild(opt);
+    });
+    if (prev) { sel.value = prev; cargarCancionesArtista(); }
+    else { mostrarEmpty('artista-detalle'); }
+  }
+
+  async function cargarCancionesArtista() {
+    const artista = document.getElementById('sel-artista').value;
+    if (!artista) { mostrarEmpty('artista-detalle'); return; }
+
+    document.getElementById('loading-artista-detalle').style.display = '';
+    document.getElementById('empty-artista-detalle').style.display = 'none';
+    document.getElementById('list-artista-detalle').innerHTML = '';
+
+    const data = await fetch(`/api/historial/${usuario()}/artista/${encodeURIComponent(artista)}`).then(r => r.json()).catch(() => []);
+    const ul   = document.getElementById('list-artista-detalle');
+
+    if (!data.length) { mostrarEmpty('artista-detalle'); return; }
+
+    const max = data[0].ms_played || 1;
+    data.forEach((t, i) => {
+      const min = t.ms_played
+        ? `${Math.floor(t.ms_played/60000)}:${String(Math.floor((t.ms_played%60000)/1000)).padStart(2,'0')}`
+        : '—';
+      const pct = Math.round(t.ms_played / max * 100);
+      ul.insertAdjacentHTML('beforeend', `
+        <li class="rank-item">
+          <span class="rank-num">${i+1}</span>
+          <div class="rank-info">
+            <div class="rank-name">${t.track_name}</div>
+            <div class="rank-sub">${t.play_count} reproducciones · ${t.album_name || '—'}</div>
+          </div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-bg"><div class="rank-bar" style="width:${pct}%"></div></div>
+            <div class="rank-val">${min}</div>
+          </div>
+        </li>
+      `);
+    });
+    document.getElementById('loading-artista-detalle').style.display = 'none';
+  }
+
+  /* ── Q6: salteadas ── */
+  async function cargarSkips() {
+    mostrarLoading('skips');
+    const data = await fetch(`/api/historial/${usuario()}/salteadas`).then(r => r.json()).catch(() => []);
+    const ul   = document.getElementById('list-skips');
+    ul.innerHTML = '';
+
+    if (!data.length) { mostrarEmpty('skips'); return; }
+
+    const max = data[0].skip_count || 1;
+    data.forEach((t, i) => {
+      const avg = t.avg_ms_before_skip ? `${(t.avg_ms_before_skip/1000).toFixed(0)}s antes de saltear` : '';
+      const pct = Math.round(t.skip_count / max * 100);
+      ul.insertAdjacentHTML('beforeend', `
+        <li class="rank-item">
+          <span class="rank-num">${i+1}</span>
+          <div class="rank-info">
+            <div class="rank-name">${t.track_name}</div>
+            <div class="rank-sub">${t.artist_name}${avg ? ' · ' + avg : ''}</div>
+          </div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-bg"><div class="rank-bar" style="width:${pct}%;background:linear-gradient(90deg,var(--blush),var(--rose))"></div></div>
+            <div class="rank-val">${t.skip_count} skips</div>
+          </div>
+        </li>
+      `);
+    });
+    document.getElementById('loading-skips').style.display = 'none';
+    document.getElementById('empty-skips').style.display = 'none';
+  }
+
+  /* ── Períodos ── */
+  async function cargarPeriodos() {
+    const data = await fetch(`/api/historial/${usuario()}/periodos`).then(r => r.json()).catch(() => []);
+    const sel  = document.getElementById('sel-periodo');
+    sel.innerHTML = '<option value="">Todo el tiempo</option>';
+    data.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  }
+
+  /* ── Helpers ── */
+  function mostrarLoading(panel) {
+    const l = document.getElementById(`loading-${panel}`);
+    if (l) { l.style.display = ''; l.innerHTML = '<div class="spinner"></div><br>Cargando…'; }
+    const t = document.getElementById(`tabla-${panel}`);
+    if (t) t.style.display = 'none';
+    const li = document.getElementById(`list-${panel}`);
+    if (li) li.innerHTML = '';
+    const e = document.getElementById(`empty-${panel}`);
+    if (e) e.style.display = 'none';
+  }
+
+  function mostrarEmpty(panel) {
+    const l = document.getElementById(`loading-${panel}`);
+    if (l) l.style.display = 'none';
+    const t = document.getElementById(`tabla-${panel}`);
+    if (t) t.style.display = 'none';
+    const e = document.getElementById(`empty-${panel}`);
+    if (e) e.style.display = '';
+  }
+
+  function ocultarStats() {
+    document.getElementById('stats-wrap').style.display = 'none';
+  }
+</script>
+</body>
+</html>

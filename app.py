@@ -12,6 +12,16 @@ from mongodb_db import mongo_analytics as mongo_db
 from redis_db import carrito_redis   as redis_db
 from neo4j_db.carga_neo4j import carga_neo4j
 from neo4j_db import recomendaciones_neo4j as rec
+from cassandra.cluster import Cluster as CassandraCluster
+
+CASSANDRA_HOST = "127.0.0.1"
+CASSANDRA_PORT = 9042
+CASSANDRA_KEYSPACE = "sonicmesh"
+
+def get_cassandra():
+    cluster = CassandraCluster([CASSANDRA_HOST], port=CASSANDRA_PORT)
+    session = cluster.connect(CASSANDRA_KEYSPACE)
+    return cluster, session
 
 
 CSV_COLUMNAS = [
@@ -149,6 +159,168 @@ def get_recomendaciones(usuario):
     resultado = rec.recomendar(usuario, top_amigas_n, top_rec_n)
     return jsonify(resultado)
 
+
+@app.route("/historial")
+def historial():
+    return render_template("historial.html")
+
+
+@app.route("/api/historial/<usuario>/canciones")
+def historial_canciones(usuario):
+    """
+    Q1 — historial completo, ordenado por timestamp desc.
+    Q4 — si se pasa ?year_month=YYYY-MM, filtra por mes.
+    Q5 — si se pasa ?platform=android, filtra por plataforma + mes.
+    """
+    year_month = request.args.get("year_month", "").strip()
+    platform   = request.args.get("platform", "").strip()
+
+    cluster, session = get_cassandra()
+    try:
+        if platform and year_month:
+            # Q5: tracks_by_user_platform
+            rows = session.execute(
+                """SELECT ts, track_name, artist_name, ms_played, skipped, spotify_track_uri
+                   FROM tracks_by_user_platform
+                   WHERE user_id = %s AND platform = %s AND year_month = %s
+                   LIMIT 200""",
+                (usuario, platform, year_month)
+            )
+        elif year_month:
+            # Q4: history_by_user_year_month
+            rows = session.execute(
+                """SELECT ts, track_name, artist_name, platform, ms_played, skipped, spotify_track_uri
+                   FROM history_by_user_year_month
+                   WHERE user_id = %s AND year_month = %s""",
+                (usuario, year_month)
+            )
+        else:
+            # Q1: tracks_by_user
+            rows = session.execute(
+                """SELECT ts, track_name, artist_name, album_name,
+    platform, ms_played, skipped, source,
+    spotify_track_uri
+FROM tracks_by_user
+WHERE user_id = %s
+LIMIT 200""",
+(usuario,)
+            )
+
+        resultado = []
+        for r in rows:
+            resultado.append({
+                "ts":          r.ts.isoformat() if r.ts else None,
+                "track_name":  r.track_name,
+                "artist_name": r.artist_name,
+                "album_name":  getattr(r, "album_name", None),
+                "platform":    getattr(r, "platform", None),
+                "ms_played":   r.ms_played,
+                "skipped":     r.skipped,
+                "uri":         r.spotify_track_uri,
+            })
+        return jsonify(resultado)
+    finally:
+        cluster.shutdown()
+
+
+@app.route("/api/historial/<usuario>/top-artistas")
+def historial_top_artistas(usuario):
+    """Q2 — top artistas por tiempo total escuchado."""
+    cluster, session = get_cassandra()
+    try:
+        rows = session.execute(
+            """SELECT artist_name, total_ms_played, play_count, last_played
+               FROM top_artists_by_user
+               WHERE user_id = %s
+               LIMIT 50""",
+            (usuario,)
+        )
+        resultado = [
+            {
+                "artist_name":     r.artist_name,
+                "total_ms_played": r.total_ms_played,
+                "play_count":      r.play_count,
+                "last_played":     r.last_played.isoformat() if r.last_played else None,
+            }
+            for r in rows
+        ]
+        return jsonify(resultado)
+    finally:
+        cluster.shutdown()
+
+
+@app.route("/api/historial/<usuario>/artista/<artista>")
+def historial_canciones_artista(usuario, artista):
+    """Q3 — canciones de un artista específico escuchadas por el usuario."""
+    cluster, session = get_cassandra()
+    try:
+        rows = session.execute(
+            """SELECT track_name, album_name, ms_played, play_count, spotify_track_uri
+               FROM tracks_by_user_artist
+               WHERE user_id = %s AND artist_name = %s
+               LIMIT 100""",
+            (usuario, artista)
+        )
+        resultado = [
+            {
+                "track_name": r.track_name,
+                "album_name": r.album_name,
+                "ms_played":  r.ms_played,
+                "play_count": r.play_count,
+                "uri":        r.spotify_track_uri,
+            }
+            for r in rows
+        ]
+        return jsonify(resultado)
+    finally:
+        cluster.shutdown()
+
+
+@app.route("/api/historial/<usuario>/salteadas")
+def historial_salteadas(usuario):
+    """Q6 — canciones más salteadas."""
+    cluster, session = get_cassandra()
+    try:
+        rows = session.execute(
+            """SELECT track_name, artist_name, skip_count, avg_ms_before_skip,
+                      platform, year_month, spotify_track_uri
+               FROM skipped_tracks_by_user
+               WHERE user_id = %s
+               LIMIT 50""",
+            (usuario,)
+        )
+        resultado = [
+            {
+                "track_name":        r.track_name,
+                "artist_name":       r.artist_name,
+                "skip_count":        r.skip_count,
+                "avg_ms_before_skip": r.avg_ms_before_skip,
+                "platform":          r.platform,
+                "year_month":        r.year_month,
+                "uri":               r.spotify_track_uri,
+            }
+            for r in rows
+        ]
+        return jsonify(resultado)
+    finally:
+        cluster.shutdown()
+
+
+@app.route("/api/historial/<usuario>/periodos")
+def historial_periodos(usuario):
+    """Devuelve los year_month disponibles para el selector del front."""
+    cluster, session = get_cassandra()
+    try:
+        rows = session.execute(
+            """SELECT DISTINCT year_month
+               FROM history_by_user_year_month
+               WHERE user_id = %s""",
+            (usuario,)
+        )
+        periodos = sorted({r.year_month for r in rows if r.year_month}, reverse=True)
+        return jsonify(periodos)
+    finally:
+        cluster.shutdown()
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
