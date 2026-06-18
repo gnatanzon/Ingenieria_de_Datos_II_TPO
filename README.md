@@ -14,7 +14,7 @@ SonicMesh integra cuatro bases de datos NoSQL para poder realizar consultas sobr
 
  **Redis:** Clave-valor, carrito de canciones (update, query, delete) 
 
- **Apache Cassandra:** Columnar, historial de reproducciones de los usuarios (update, query, delete) 
+ **Apache Cassandra:** Columnar, historial de reproducciones de los usuarios (select, create, delete) 
 
 ---
 
