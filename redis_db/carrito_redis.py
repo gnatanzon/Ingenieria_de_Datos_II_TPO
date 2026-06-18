@@ -12,25 +12,21 @@ def _key(usuario: str):
 
 
 def obtener_uris_carrito(usuario: str):
-    return r.execute_command("LRANGE", _key(usuario), 0, -1)
+    return r.execute_command("SMEMBERS", _key(usuario))
 
 
 def contar_carrito(usuario: str):
-    return r.execute_command("LLEN", _key(usuario))
+    return r.execute_command("SCARD", _key(usuario))
 
 
 def agregar_uri(usuario: str, uri: str):
-    key = _key(usuario)
-    existentes = r.execute_command("LRANGE", key, 0, -1)
-    if uri not in existentes:
-        r.execute_command("RPUSH", key, uri)
-    return r.execute_command("LLEN", key)
+    r.execute_command("SADD", _key(usuario), uri)
+    return r.execute_command("SCARD", _key(usuario))
 
 
 def quitar_uri(usuario: str, uri: str):
-    key = _key(usuario)
-    r.execute_command("LREM", key, 0, uri)
-    return r.execute_command("LLEN", key)
+    r.execute_command("SREM", _key(usuario), uri)
+    return r.execute_command("SCARD", _key(usuario))
 
 
 def vaciar_carrito(usuario: str):
