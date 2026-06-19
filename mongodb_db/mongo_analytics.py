@@ -44,10 +44,8 @@ class MongoAnalytics:
             # Limito a los 5 mejores
             {"$limit": 5}
         ]
-        
-        resultados = self.collection.aggregate(pipeline)
-        for i, res in enumerate(resultados, 1):
-            print(f"{i}. 🎤 {res['_id']} - Promedio: {res['popularidad_promedio']:.1f} (Basado en {res['total_canciones']} temas)")
+
+        return list(self.collection.aggregate(pipeline))
 
     def buscar_por_mood(self, danceability_min, energy_min):
         
@@ -112,18 +110,8 @@ class MongoAnalytics:
             # 4. Ordenamos cronológicamente de menor a mayor
             {"$sort": {"_id": 1}}
         ]
-        
-        resultados = self.collection.aggregate(pipeline)
-        
-        conteo = 0
-        for res in resultados:
-            # Validamos que el ID de la década sea coherente (ej: "2020s" tiene 5 caracteres)
-            if res['_id'] and len(res['_id']) == 5 and res['_id'][0].isdigit():
-                print(f" * Década {res['_id']}: {res['duracion_promedio_min']:.2f} minutos promedio ({res['cantidad_temas']} canciones)")
-                conteo += 1
-                
-        if conteo == 0:
-            print("⚠️ No se encontraron décadas para agrupar. Verificá que los documentos en la base de datos tengan el campo 'album.fecha_de_lanzamiento'.")
+
+        return list(self.collection.aggregate(pipeline))
 
     def close(self):
         self.client.close()
